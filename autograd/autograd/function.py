@@ -1,5 +1,6 @@
 import numpy as np
-from autograd import Tensor
+from .tensor import Tensor
+from functools import partialmethod
 
 class Function(object):
     def __init__(self, *tensors):
@@ -17,4 +18,23 @@ class Function(object):
             *[t.data for t in inputs], **kwargs))
         res._ctx = ctx
         return res
+
+
+class Add(Function):
+    def forward(self, x, y):
+        return x + y
+    
+    def backward(self, prev_grad):
+        return prev_grad, prev_grad
+setattr(Tensor, 'add', partialmethod(Add.apply, Add))
+
+class Sum(Function):
+    def forward(self, x, axis=None, keepdims=True):
+        self.save_for_backward(x.shape)
+        return x.sum(axis=axis, keepdims=keepdims)
+
+    def backward(self, prev_grad):
+        xshape, = self.saved_tensors
+        return prev_grad * np.ones(xshape)
+setattr(Tensor, 'sum', partialmethod(Sum.apply, Sum))
 
