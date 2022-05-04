@@ -131,3 +131,46 @@ dmypy.json
 # data folders etc.
 .data/
 data/
+
+# Vim swapfiles et al.
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]sw[a-p]
+*~
+# vim swapfiles and stuff
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]sw[a-p]
+*~
+# vim swapfiles and stuff
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]sw[a-p]
+*~
+# vim swapfiles and stuff
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]sw[a-p]
+*~
+# vim swapfiles and stuff
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]sw[a-p]
+*~
+# vim swapfiles and stuff
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]sw[a-p]
+*~
+# vim swapfiles and stuff
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]sw[a-p]
+*~
