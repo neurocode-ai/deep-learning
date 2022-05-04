@@ -1,7 +1,7 @@
 # EDUGRAD, educational deep learning
 With a passion rooted in knowledge, learning, and sharing of information, edugrad aims to provide extensive information on everything deep learning related. This repository is for anyone interested in deep learning, with extensive guides and tutorial notebooks designed for both the curious novice learner and the experienced practitioner. Thus, this is a Python focused repository that provides three high-level features:
 - Lecture notebooks on artificial neural networks and deep learning
-- Assignments to evaluate your theoretical understanding in a practical context
+- Tutorials to evaluate your theoretical understanding on practical tasks
 - Minimalistic deep learning framework (with NumPy)
 
 ## Components
