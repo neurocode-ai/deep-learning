@@ -8,8 +8,9 @@ class Tensor(object):
 
     Example usage
     -------------
-    >>> tensor1 = Tensor(np.ones((5,1,4)), dtype=np.float64)
-    >>> tensor2 = Tensor([[-4.0, -1, 15.2]], requires_grad=True)
+    Create some tensors.
+        >>> tensor1 = Tensor(np.ones((5,1,4)), dtype=np.float64)
+        >>> tensor2 = Tensor([[-4.0, -1, 15.2]], requires_grad=True)
 
     Init parameters
     ---------------
@@ -46,6 +47,30 @@ class Tensor(object):
         return f'<autograd.Tensor\n{self.data}\n' \
                 f'dtype={self.dtype}, grad_fn={self._ctx}, grad={self.grad}>'
 
+    @classmethod
+    def zeros(cls, *shape, **kwargs):
+        return cls(np.zeros(shape), **kwargs)
+
+    @classmethod
+    def ones(cls, *shape, **kwargs):
+        return cls(np.ones(shape), **kwargs)
+
+    @classmethod
+    def diagonal(cls, dims, **kwargs):
+        return cls(np.eye(dims), **kwargs)
+
+    @classmethod
+    def uniform(cls, *shape, low=-1.0, high=1.0, **kwargs):
+        return cls(np.random.uniform(low, high, size=shape), **kwargs)
+
+    @classmethod
+    def normal(cls, *shape, loc=0.0, scale=1.0, **kwargs):
+        return cls(np.random.normal(loc, scale, size=shape), **kwargs)
+
+    @classmethod
+    def full(cls, value, *shape, **kwargs):
+        return cls(np.full(shape, value), **kwargs)
+
     @property
     def shape(self):
         return self.data.shape
@@ -63,10 +88,11 @@ class Tensor(object):
 
         Example usage
         -------------
-        >>> x = Tensor(np.ones((128, 784)))
-        >>> W = Tensor(np.ones((784, 64)), requires_grad=True)
-        >>> y = x.dot(W).mean()
-        >>> y.backward()
+        Invoke the backwards pass on Tensor generated from operation.
+            >>> x = Tensor(np.ones((128, 784)))
+            >>> W = Tensor(np.ones((784, 64)), requires_grad=True)
+            >>> y = x.dot(W).mean()
+            >>> y.backward()
 
         Parameters
         ----------
@@ -74,8 +100,7 @@ class Tensor(object):
             Should be False for all Tensors that are no the one
             invoking the initial backwards call. For the first
             gradient, all values are set to 1, since
-            grad_X/grad_X == 1, so fill the gradient with ones in
-            shape of current Tensor.
+            grad_X/grad_X == 1, so fill grad with ones.
 
         """
         if not self._ctx:
