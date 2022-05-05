@@ -1,17 +1,15 @@
-import numpy as np
-from .tensor import Tensor
-from functools import partialmethod
+from autograd import Tensor
 
 class Function(object):
     def __init__(self, *tensors):
         self.parents = tensors
         self.saved_tensors = []
-        self.requires_grad = _tensors_require_grad(tensors)
+        self.requires_grad = _tensors_require_grad(*tensors)
 
     def save_for_backward(self, *tensors):
         self.saved_tensors.extend(tensors)
 
-    def apply(self, func, *inputs, **kwargs):
+    def apply(self, func, *tensors, **kwargs):
         # by registering the ops to the Tensor as an attribute, `self` in
         # this case is the Tensor calling the op, `func` is the 
         # uninitialized operation to perform, e.g. Add, Sub, Mean, Dot etc.
@@ -27,7 +25,4 @@ class Function(object):
 
 def _tensors_require_grad(*tensors):
     return any([t.requires_grad for t in tensors if isinstance(t, Tensor)])
-
-def _register(name, func):
-    setattr(Tensor, name, partialmethod(func.apply, func))
 
