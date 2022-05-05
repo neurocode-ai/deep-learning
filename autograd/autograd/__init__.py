@@ -3,5 +3,6 @@ import sys
 import warnings
 
 from .tensor import Tensor
-from .function import *
+from .function import Function
+from .ops import *
 
