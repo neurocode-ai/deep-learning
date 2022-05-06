@@ -21,7 +21,7 @@ class Tensor(object):
         self._ctx = None
 
     def __str__(self):
-        return f'<edugrad.Tensor(\n{self.data}\n'
+        return f'<leaf.Tensor(\n{self.data}\n'
         + f'dtype={self.dtype}, grad_fn={self._ctx}, grad={self.grad}>'
 
     @classmethod

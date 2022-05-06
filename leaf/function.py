@@ -1,4 +1,4 @@
-from edugrad import Tensor
+from leaf import Tensor
 
 class Function(object):
     def __init__(self, *tensors):

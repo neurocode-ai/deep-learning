@@ -2,40 +2,40 @@ import torch
 import numpy as np
 import timeit
 import unittest
-from edugrad import Tensor
+from leaf import Tensor
 from functools import partial
 
-def _test_op(shapes, torch_func, edugrad_func, name, timeits=10):
+def _test_op(shapes, torch_func, leaf_func, name, timeits=10):
     torch_t = [torch.tensor(np.random.random(size=shape), requires_grad=True)
             for shape in shapes]
-    edugrad_t = [Tensor(t.detach().numpy(), requires_grad=True) for t in torch_t]
+    leaf_t = [Tensor(t.detach().numpy(), requires_grad=True) for t in torch_t]
 
     torch_out = torch_func(*torch_t)
-    edugrad_out = edugrad_func(*edugrad_t)
+    leaf_out = leaf_func(*leaf_t)
 
-    np.testing.assert_allclose(torch_out.detach().numpy(), edugrad_out.data, 
+    np.testing.assert_allclose(torch_out.detach().numpy(), leaf_out.data, 
             atol=1e-6, rtol=1e-3)
 
     torch_out.mean().backward()
-    edugrad_out.mean().backward()        
+    leaf_out.mean().backward()        
 
-    for tt, at in zip(torch_t, edugrad_t):
+    for tt, lt in zip(torch_t, leaf_t):
         np.testing.assert_allclose(tt.grad.detach().numpy(),
-                at.grad.data, atol=1e-6, rtol=1e-3)
+                lt.grad.data, atol=1e-6, rtol=1e-3)
 
     f_torch_ms = timeit.Timer(partial(torch_func, 
         *torch_t)).timeit(timeits) * 1000.0 / timeits
-    f_edugrad_ms = timeit.Timer(partial(edugrad_func,
-        *edugrad_t)).timeit(timeits) * 1000.0 / timeits
+    f_leaf_ms = timeit.Timer(partial(leaf_func,
+        *leaf_t)).timeit(timeits) * 1000.0 / timeits
 
     b_torch_ms = timeit.Timer(partial(lambda f,t: f(*t).mean().backward(),
         torch_func, torch_t)).timeit(timeits) * 1000.0 / timeits
-    b_edugrad_ms = timeit.Timer(partial(lambda f,t: f(*t).mean().backward(),
-        edugrad_func, edugrad_t)).timeit(timeits) * 1000.0 / timeits
+    b_leaf_ms = timeit.Timer(partial(lambda f,t: f(*t).mean().backward(),
+        leaf_func, leaf_t)).timeit(timeits) * 1000.0 / timeits
 
-    print(f'\n[*] testing {name} with shapes {shapes}, torch/edugrad \n' \
-            f'forward: {f_torch_ms:.3f} ms / {f_edugrad_ms:.3f} ms ' \
-            f'backward: {b_torch_ms:.3f} ms / {b_edugrad_ms:.3f} ms')
+    print(f'\n[*] testing {name} with shapes {shapes}, torch/leaf \n' \
+            f'forward: {f_torch_ms:.3f} ms / {f_leaf_ms:.3f} ms ' \
+            f'backward: {b_torch_ms:.3f} ms / {b_leaf_ms:.3f} ms')
     
 class TestOps(unittest.TestCase):
     def test_add(self):

@@ -2,7 +2,7 @@ import sys
 import os
 import numpy as np
 import unittest
-from edugrad import Tensor
+from leaf import Tensor
 
 class TestTensor(unittest.TestCase):
     def test_shape(self):

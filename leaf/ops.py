@@ -1,5 +1,5 @@
 import numpy as np
-from edugrad import Tensor, Function
+from leaf import Tensor, Function
 from functools import partialmethod
 
 def _register(name, func):
