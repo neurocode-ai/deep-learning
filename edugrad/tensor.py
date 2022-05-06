@@ -21,8 +21,8 @@ class Tensor(object):
         self._ctx = None
 
     def __str__(self):
-        return f'<autograd.Tensor\n{self.data}\n' \
-                f'dtype={self.dtype}, grad_fn={self._ctx}, grad={self.grad}>'
+        return f'<edugrad.Tensor(\n{self.data}\n'
+        + f'dtype={self.dtype}, grad_fn={self._ctx}, grad={self.grad}>'
 
     @classmethod
     def zeros(cls, *shape, **kwargs):

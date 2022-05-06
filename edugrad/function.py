@@ -1,4 +1,4 @@
-from autograd import Tensor
+from edugrad import Tensor
 
 class Function(object):
     def __init__(self, *tensors):

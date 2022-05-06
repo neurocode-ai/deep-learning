@@ -1,6 +1,5 @@
 import numpy as np
-from autograd import Function
-from autograd import Tensor
+from edugrad import Tensor, Function
 from functools import partialmethod
 
 def _register(name, func):
