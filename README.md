@@ -12,3 +12,4 @@ With a passion rooted in knowledge, learning, and sharing of information, edugra
 
 ## License
 EDUGRAD has an Apache-2.0 styled license, please see [LICENSE](https://github.com/NEUROCODE-ai/edugrad/blob/master/LICENSE) for more information.
+
