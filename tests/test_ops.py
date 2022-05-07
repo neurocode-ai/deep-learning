@@ -76,4 +76,8 @@ class TestOps(unittest.TestCase):
     def test_sigmoid(self):
         _test_op([(123, 51, 2)], lambda t: t.sigmoid(), Tensor.sigmoid, 'sigmoid')
         _test_op([(5, 6)], lambda t: t.sigmoid(), Tensor.sigmoid, 'sigmoid')
+
+    def test_pow(self):
+        _test_op([(1, 4)], lambda t: t.pow(2), lambda t: Tensor.pow(t, 2), 'pow')
+        _test_op([(10, 2, 8)], lambda t: t.pow(0.5), lambda t: Tensor.pow(t, 0.5), 'pow')
     
