@@ -77,3 +77,45 @@ class Sum(Function):
         return np.ones(xshape) * prev_grad
 _register('sum', Sum)
 
+class Sigmoid(Function):
+    def forward(self, x):
+        result = 1 / (1 + np.exp(-x))
+        self.save_for_backward(result)
+        return result
+    
+    def backward(self, prev_grad):
+        result, = self.saved_tensors
+        return prev_grad * result * (1 - result)
+_register('sigmoid', Sigmoid)
+
+class ReLU(Function):
+    def forward(self, x):
+        self.save_for_backward(x)
+        return np.maximum(x, 0)
+
+    def backward(self, prev_grad):
+        x, self.saved_tensors
+        return prev_grad * (x >= 0)
+_register('relu', ReLU)
+
+class Pow(Function):
+    def forward(self, x, y):
+        self.save_for_backward(x, y)
+        return np.power(x, y)
+
+    def backward(self, prev_grad):
+        x, y, = self.saved_tensors
+        return (np.broadcast_to(prev_grad * y * np.power(x, y - 1), x.shape), None)
+_register('pow', Pow)
+
+class Reshape(Function):
+    def forward(self, x, shape):
+        self.save_for_backward(x.shape)
+        return x.reshape(shape)
+
+    def backward(self, prev_grad):
+        xshape, = self.saved_tensors
+        return prev_grad.reshape(xshape)
+_register('reshape', Reshape)
+
+

@@ -72,4 +72,18 @@ class TestOps(unittest.TestCase):
 
     def test_log(self):
         _test_op([(154, 78, 2, 201)], lambda t: t.log(), Tensor.log, 'log')
+    
+    def test_sigmoid(self):
+        _test_op([(123, 51, 2)], lambda t: t.sigmoid(), Tensor.sigmoid, 'sigmoid')
+        _test_op([(5, 6)], lambda t: t.sigmoid(), Tensor.sigmoid, 'sigmoid')
+
+    def test_pow(self):
+        _test_op([(1, 4)], lambda t: t.pow(2), lambda t: Tensor.pow(t, 2), 'pow')
+        _test_op([(10, 2, 8)], lambda t: t.pow(0.5), lambda t: Tensor.pow(t, 0.5), 'pow')
+    
+    def test_reshape(self):
+        _test_op([(8, 2)], lambda t: torch.reshape(t, (4, 4)), 
+                lambda t: Tensor.reshape(t, (4, 4)), 'reshape')
+        _test_op([(17, 4, 8, 1)], lambda t: torch.reshape(t, (17, 2, 16)),
+                lambda t: Tensor.reshape(t, (17, 2, 16)), 'reshape')
 
