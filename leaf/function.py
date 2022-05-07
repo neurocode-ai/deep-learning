@@ -18,21 +18,33 @@ class Function(object):
         # **kwargs are used to specify op specific behavior
         context = func(self, *tensors)
         result = Tensor(context.forward(self.data,
-            *[t.data if isinstance(t, Tensor) else _determine_instance(context, t) 
-                for t in tensors], **kwargs), requires_grad=context.requires_grad)
-
+            *_validate_arg_tensors(context, *tensors),
+            **kwargs), requires_grad=context.requires_grad)
         result._ctx = context
         return result
 
-def _tensors_require_grad(*tensors):
-    return any([t.requires_grad for t in tensors if isinstance(t, Tensor)])
+def _validate_arg_tensors(context, *tensors):
+    return [_extract_data(context, t) for t in tensors]
 
-def _determine_instance(context, t):
+def _extract_data(context, t):
     if isinstance(t, np.ndarray):
         return t
 
-    if isinstance(t, float) or isinstance(t, int):
-        return np.array([t])
+    if isinstance(t, Tensor):
+        return t.data
 
-    raise ValueError(f'unknown datatype passed to function {context}, {t}')
+    if isinstance(t, int):
+        return np.array([t]).astype(int)
+
+    if isinstance(t, float):
+        return np.array([t]).astype(float)
+
+    if isinstance(t, tuple) or isinstance(t, list):
+        return np.array(t)
+
+    raise ValueError(f'unknown data instance passed as tensor arg to context' + 
+            f'{context}, {t}')
+
+def _tensors_require_grad(*tensors):
+    return any(t.requires_grad for t in tensors if isinstance(t, Tensor))
 
