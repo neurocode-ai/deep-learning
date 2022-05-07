@@ -94,9 +94,21 @@ class ReLU(Function):
         return np.maximum(x, 0)
 
     def backward(self, prev_grad):
-        x, self.saved_tensors
+        x, = self.saved_tensors
         return prev_grad * (x >= 0)
 _register('relu', ReLU)
+
+class Tanh(Function):
+    def forward(self, x):
+        posexp, negexp = np.exp(x), np.exp(-x)
+        result = (posexp - negexp) / (posexp + negexp)
+        self.save_for_backward(result)
+        return result
+
+    def backward(self, prev_grad):
+        result, = self.saved_tensors
+        return prev_grad * (1 - np.power(result, 2))
+_register('tanh', Tanh)
 
 class Pow(Function):
     def forward(self, x, y):
