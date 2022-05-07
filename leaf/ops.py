@@ -88,3 +88,22 @@ class Sigmoid(Function):
         return prev_grad * result * (1 - result)
 _register('sigmoid', Sigmoid)
 
+class ReLU(Function):
+    def forward(self, x):
+        self.save_for_backward(x)
+        return np.maximum(x, 0)
+
+    def backward(self, prev_grad):
+        x, self.saved_tensors
+        return prev_grad * (x >= 0)
+_register('relu', ReLU)
+
+class Pow(Function):
+    def forward(self, x, y):
+        self.save_for_backward(x, y)
+        return np.power(x, y)
+
+    def backward(self, prev_grad):
+        x, y, = self.saved_tensors
+        return (np.broadcast_to(prev_grad * y * np.power(x, y - 1), x.shape), None)
+_register('pow', Pow)
