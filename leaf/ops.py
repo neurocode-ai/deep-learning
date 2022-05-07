@@ -107,3 +107,15 @@ class Pow(Function):
         x, y, = self.saved_tensors
         return (np.broadcast_to(prev_grad * y * np.power(x, y - 1), x.shape), None)
 _register('pow', Pow)
+
+class Reshape(Function):
+    def forward(self, x, shape):
+        self.save_for_backward(x.shape)
+        return x.reshape(shape)
+
+    def backward(self, prev_grad):
+        xshape, = self.saved_tensors
+        return prev_grad.reshape(xshape)
+_register('reshape', Reshape)
+
+
