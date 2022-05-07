@@ -77,3 +77,14 @@ class Sum(Function):
         return np.ones(xshape) * prev_grad
 _register('sum', Sum)
 
+class Sigmoid(Function):
+    def forward(self, x):
+        result = 1 / (1 + np.exp(-x))
+        self.save_for_backward(result)
+        return result
+    
+    def backward(self, prev_grad):
+        result, = self.saved_tensors
+        return prev_grad * result * (1 - result)
+_register('sigmoid', Sigmoid)
+
