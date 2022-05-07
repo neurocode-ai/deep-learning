@@ -1,3 +1,4 @@
+import numpy as np
 from leaf import Tensor
 
 class Function(object):
@@ -17,12 +18,21 @@ class Function(object):
         # **kwargs are used to specify op specific behavior
         context = func(self, *tensors)
         result = Tensor(context.forward(self.data,
-            *[t.data for t in tensors], **kwargs),
-            requires_grad=context.requires_grad)
+            *[t.data if isinstance(t, Tensor) else _determine_instance(context, t) 
+                for t in tensors], **kwargs), requires_grad=context.requires_grad)
 
         result._ctx = context
         return result
 
 def _tensors_require_grad(*tensors):
     return any([t.requires_grad for t in tensors if isinstance(t, Tensor)])
+
+def _determine_instance(context, t):
+    if isinstance(t, np.ndarray):
+        return t
+
+    if isinstance(t, float) or isinstance(t, int):
+        return np.array([t])
+
+    raise ValueError(f'unknown datatype passed to function {context}, {t}')
 
