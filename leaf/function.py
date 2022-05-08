@@ -17,11 +17,20 @@ class Function(object):
         # `*tensors` are the Tensors to use together with `self` in the `func`,
         # **kwargs are used to specify op specific behavior
         context = func(self, *tensors)
-        result = Tensor(context.forward(self.data,
-            *_validate_arg_tensors(context, *tensors),
-            **kwargs), requires_grad=context.requires_grad)
-        result._ctx = context
-        return result
+        results = context.forward(self.data,
+                *_validate_arg_tensors(context, *tensors), **kwargs)
+
+        if isinstance(results, list):
+            results = [Tensor(res, requires_grad=context.requires_grad, _idx=idx,
+                _isleaf=False) for idx, res in enumerate(results)]
+            for res in results:
+                res._ctx = context if res.requires_grad else None
+
+        elif isinstance(results, np.ndarray) or isinstance(results, np.float64):
+            results = Tensor(results, requires_grad=context.requires_grad, _isleaf=False)
+            results._ctx = context if results.requires_grad else None
+
+        return results
 
 def _validate_arg_tensors(context, *tensors):
     return [_extract_data(context, t) for t in tensors]
