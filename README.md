@@ -57,12 +57,10 @@ optimizer = leaf.optim.Adam(
 
 dataloader = leaf.datautil.fetch_mnist()
 trainer = leaf.Trainer(
-  model,
-  criterion,
-  optimizer,
   dataloader,
   max_epochs=100
 )
+trainer.fit(model, criterion, optimizer)
 ```
 
 ### Installation
