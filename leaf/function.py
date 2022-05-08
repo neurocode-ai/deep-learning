@@ -26,7 +26,7 @@ class Function(object):
             for res in results:
                 res._ctx = context if res.requires_grad else None
 
-        elif isinstance(results, np.ndarray) or isinstance(results, np.float64):
+        elif isinstance(results, np.ndarray) or isinstance(results, np.float32) or isinstance(results, np.float64):
             results = Tensor(results, requires_grad=context.requires_grad, _isleaf=False)
             results._ctx = context if results.requires_grad else None
 
