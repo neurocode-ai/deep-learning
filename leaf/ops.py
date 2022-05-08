@@ -28,12 +28,22 @@ _register('sub', Sub)
 class Matmul(Function):
     def forward(self, x, y):
         self.save_for_backward(x, y)
-        return x.dot(y)
+        return x @ y
 
     def backward(self, prev_grad, **kwargs):
         x, y, = self.saved_tensors
-        return prev_grad.dot(y.T), x.T.dot(prev_grad)
+        return prev_grad @ y.T, x.T @ prev_grad
 _register('matmul', Matmul)
+
+class Multiply(Function):
+    def forward(self, x, y):
+        self.save_for_backward(x, y)
+        return np.multiply(x, y)
+
+    def backward(self, prev_grad, **kwargs):
+        x, y, = self.saved_tensors
+        return prev_grad * y, prev_grad * x
+_register('multiply', Multiply)
 
 class Mean(Function):
     def forward(self, x, axis=None, keepdims=True):
