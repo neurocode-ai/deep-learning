@@ -111,4 +111,9 @@ class TestOps(unittest.TestCase):
         _test_op([(1, 12)], lambda t: t.chunk(4, dim=1), lambda t: Tensor.chunk(t,
             chunks=4, dim=1), 'chunk')
     
+    def test_multiply(self):
+        _test_op([(4, 8), (4, 8)], lambda a, b: torch.mul(a, b), lambda a, b:
+                Tensor.multiply(a, b), 'multiply')
+        _test_op([(128, 10, 49), (128, 10, 49)], lambda a, b: torch.mul(a, b),
+                lambda a, b: Tensor.multiply(a, b), 'multiply')
 
