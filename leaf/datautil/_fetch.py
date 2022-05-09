@@ -4,6 +4,7 @@ import os
 import gzip
 import numpy as np
 from pathlib import Path
+from .dataset import Dataset
 
 __root__ = Path(os.getcwd())
 
@@ -28,7 +29,7 @@ def _fetch(url, ddir):
             f.write(data)
 
     sys.stdout.write('done!\n')
-    return np.frombuffer(gzip.decompress(data), dtype=np.float32).copy()
+    return np.frombuffer(gzip.decompress(data), dtype=np.uint8).copy()
 
 def _remove(url, ddir):
     dfolder = Path(__root__, ddir)
@@ -68,13 +69,16 @@ def fetch_mnist(version='digits', remove_after=False, ddir='.data/'):
         raise KeyError(
         f'provided MNIST version does not exist, {version=}')
 
-    dsets = [_fetch(url) for url in urls[version]]
+    dsets = [_fetch(url, ddir) for url in urls[version]]
     for i, dset in enumerate(dsets):
         dsets[i] = dset[8:] if i % 2 else dset[0x10:].reshape((-1, 28, 28))
+
+    training_dset = Dataset(dsets[0], dsets[1])
+    testing_dset = Dataset(dsets[2], dsets[3])
 
     if remove_after:
         for url in urls[version]: _remove(url, ddir)
 
-    return dsets
+    return training_dset, testing_dset
 
 
