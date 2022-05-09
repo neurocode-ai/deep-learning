@@ -34,7 +34,7 @@ import numpy as np
 import leaf.nn as nn
 
 # define your neural network, PyTorch style
-class MNISTNet(nn.Module):
+class DenseClassifier(nn.Module):
   def __init___(self):
     self.layers = nn.Sequential(
       nn.Linear(784, 128),
@@ -49,17 +49,16 @@ class MNISTNet(nn.Module):
 ```
 Next just initialize the criteria for you domain-specific task, dataloader, optimizer of your choice, and you can seamlessly train a neural network from scratch. It supports training models with boilerplate code as well, like in PyTorch, but preferred and easier way is to use the trainer class.
 ```python
-model = MNISTNet()
+model = DenseClassifier()
 criterion = leaf.criterion.NLLLoss()
 optimizer = leaf.optim.Adam(
   model.parameters(), lr=1e-3, weight_decay=1e-5
 )
 
-dataloader = leaf.datautil.fetch_mnist()
-trainer = leaf.Trainer(
-  dataloader,
-  max_epochs=100
-)
+train, _ = leaf.datautil.fetch_mnist()
+trainloader = leaf.datautil.DataLoader(train, batch_size=128, shuffle=True)
+
+trainer = leaf.Trainer(trainloader, max_epochs=100)
 trainer.fit(model, criterion, optimizer)
 ```
 
