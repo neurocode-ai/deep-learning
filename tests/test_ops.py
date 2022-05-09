@@ -110,6 +110,10 @@ class TestOps(unittest.TestCase):
     def test_chunk(self):
         _test_op([(1, 12)], lambda t: t.chunk(4, dim=1), lambda t: Tensor.chunk(t,
             chunks=4, dim=1), 'chunk')
+        _test_op([(8, 4, 10)], lambda t: t.chunk(2, dim=0), lambda t: Tensor.chunk(t,
+            chunks=2, dim=0), 'chunk')
+        _test_op([(100, 10, 20, 50)], lambda t: t.chunk(10, dim=3), lambda t:
+                Tensor.chunk(t, chunks=10, dim=3), 'chunk')
     
     def test_multiply(self):
         _test_op([(4, 8), (4, 8)], lambda a, b: torch.mul(a, b), lambda a, b:
