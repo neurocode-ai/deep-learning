@@ -5,3 +5,4 @@ from leaf import optimizer
 from leaf import criterion
 from leaf import nn
 from leaf import initializer
+from leaf import datautil
