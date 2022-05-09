@@ -9,13 +9,40 @@ class Module(object):
         f'user defined nn.Module has not implemented forward pass')
 
     def parameters(self):
-        # TODO: implement this
-        return []
+        params = []
+        for attr in self.__dict__.values():
+            if isinstance(attr, Tensor):
+                if attr.requires_grad:
+                    params.append(attr)
+            if isinstance(attr, list):
+                params.extend([p for p in attr if p.requires_grad])
+            if isinstance(attr, Sequential):
+                params.extend([p for p in attr.parameters() if p.requires_grad])
+        return params
 
+class Sequential(object):
+    def __init__(self, *modules):
+        self._modules = modules
+
+    def __call__(self, x):
+        return self.forward(x)
+    
+    def forward(self, x):
+        for m in self._modules:
+            x = m(x)
+        return x
+    
+    def parameters(self):
+        params = []
+        for m in self._modules:
+            params.extend(m.parameters())
+        return params
+    
 class Linear(Module):
     def __init__(self, fan_in, fan_out, use_bias=True):
-        self.weight_ = Tensor.uniform(fan_in, fan_out)
-        self.bias_ = Tensor.uniform(fan_out) if use_bias else None
+        self.use_bias = use_bias
+        self.weight_ = Tensor.uniform(fan_in, fan_out, requires_grad=True)
+        self.bias_ = Tensor.uniform(fan_out, requires_grad=True) if use_bias else None
 
     def forward(self, x):
         result = x.matmul(self.weight_)
@@ -61,5 +88,10 @@ class LSTM(Module):
             hidden_seq.append(h_t)
         print(hidden_seq)
 
+class LogSoftmax(Module):
+    def forward(self, x):
+        return x.logsoftmax()
 
-
+class ReLU(Module):
+    def forward(self, x):
+        return x.relu()

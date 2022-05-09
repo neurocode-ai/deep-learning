@@ -1,1 +1,2 @@
-from .nn import Module, Linear, LSTM
+from .nn import Module, Sequential, Linear, LSTM, LogSoftmax, ReLU
+

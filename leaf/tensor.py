@@ -39,7 +39,8 @@ class Tensor(object):
 
     @classmethod
     def uniform(cls, *shape, low=-1.0, high=1.0, **kwargs):
-        return cls(np.random.uniform(low, high, size=shape), **kwargs)
+        return cls(np.random.uniform(low, high, size=shape) 
+                / np.sqrt(np.prod(shape)), **kwargs)
 
     @classmethod
     def normal(cls, *shape, loc=0.0, scale=1.0, **kwargs):

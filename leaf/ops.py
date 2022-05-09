@@ -22,7 +22,7 @@ class Sub(Function):
 
     def backward(self, prev_grad, **kwargs):
         xshape, yshape, = self.saved_tensors
-        return np.broadcast_to(prev_grad, xshape), -np.broadcast_to(prev_grad, yshape)
+        return prev_grad * np.ones(xshape), -prev_grad * np.ones(yshape)
 _register('sub', Sub)
 
 class Matmul(Function):
@@ -152,4 +152,18 @@ class Chunk(Function):
         result = np.concatenate(remake, axis=dim).reshape(xshape)
         return result
 _register('chunk', Chunk)
+
+class LogSoftmax(Function):
+    def forward(self, x):
+        def _logsumexp(y):
+            m = y.max(axis=1)
+            return m + np.log(np.exp(y - m.reshape((-1, 1))).sum(axis=1))
+        lse = x - _logsumexp(x).reshape((-1, 1))
+        self.save_for_backward(lse)
+        return lse
+    
+    def backward(self, prev_grad, **kwargs):
+        lse, = self.saved_tensors
+        return prev_grad - np.exp(lse) * prev_grad.sum(axis=1).reshape((-1, 1))
+_register('logsoftmax', LogSoftmax)
 
