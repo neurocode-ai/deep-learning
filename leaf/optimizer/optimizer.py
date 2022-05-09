@@ -13,3 +13,4 @@ class Optimizer(object):
         raise NotImplementedError(
         f'user defined Optimizer has not implemented gradient update')
 
+

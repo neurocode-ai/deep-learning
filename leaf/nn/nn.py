@@ -12,13 +12,13 @@ class Module(object):
         # TODO: implement this
         return []
 
-class Dense(Module):
+class Linear(Module):
     def __init__(self, fan_in, fan_out, use_bias=True):
         self.weight_ = Tensor.uniform(fan_in, fan_out)
         self.bias_ = Tensor.uniform(fan_out) if use_bias else None
 
     def forward(self, x):
-        result = x.dot(self.weight_)
+        result = x.matmul(self.weight_)
         
         if self.use_bias:
             return result.add(self.bias_)
@@ -47,6 +47,7 @@ class LSTM(Module):
         else: h_t, c_t = initial_states
 
         for t in range(seq_len):
+            # TODO: IMPLEMENT ARRAY ACCESSING FOR TENSOR, __getitem__
             x_t = x[:, t, :]
             gates = x_t.matmul(self.W_ih.T).add(h_t.matmul(self.W_hh.T)).add(self.b_ih.add(self.b_hh))
 
