@@ -1,4 +1,5 @@
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 import timeit
@@ -120,4 +121,10 @@ class TestOps(unittest.TestCase):
                 Tensor.multiply(a, b), 'multiply')
         _test_op([(128, 10, 49), (128, 10, 49)], lambda a, b: torch.mul(a, b),
                 lambda a, b: Tensor.multiply(a, b), 'multiply')
+
+    def test_logsoftmax(self):
+        _test_op([(128, 100)], lambda x: nn.LogSoftmax(dim=1)(x), Tensor.logsoftmax,
+        'logsoftmax')
+        _test_op([(512, 1)], lambda x: nn.LogSoftmax(dim=1)(x), Tensor.logsoftmax,
+        'logsoftmax')
 
