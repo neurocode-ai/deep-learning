@@ -6,6 +6,7 @@ from leaf import Tensor
 
 class TestTensor(unittest.TestCase):
     def test_shape(self):
+        sys.stdout.write('\n[*] testing Tensor.shape...')
         t1 = Tensor([3, 2, 4])
         t2 = Tensor([[3], [2], [4]])
         t3 = Tensor(2)
@@ -19,8 +20,10 @@ class TestTensor(unittest.TestCase):
         assert t4.shape == (1, )
         assert t5.shape == (3, )
         assert t6.shape == (5, 1, 4, 2)
+        sys.stdout.write(' passed!\n')
 
     def test_dtype(self):
+        sys.stdout.write('\n[*] testing Tensor.dtype...')
         t1 = Tensor([-4, 1, 190])
         t2 = Tensor([[5, -2, 20]], dtype=np.uint8)
         t3 = Tensor(2.1)
@@ -36,8 +39,10 @@ class TestTensor(unittest.TestCase):
         assert t5.dtype == np.uint8
         assert t6.dtype == np.int64
         assert t7.dtype == np.float32
+        sys.stdout.write(' passed!\n')
 
     def test_classmethods(self):
+        sys.stdout.write('\n[*] testing Tensor classmethods...')
         t1 = Tensor.zeros(4, 2, 3, dtype=np.uint8)
         t2 = Tensor.ones(8, 5, 2, 4, requires_grad=True)
         t3 = Tensor.diagonal(4, dtype=np.float64)
@@ -62,6 +67,7 @@ class TestTensor(unittest.TestCase):
 
         np.testing.assert_array_less(t4.data, np.ones((5, 12, 3)))
         np.testing.assert_array_equal(t6.data, np.full((7, 5, 1, 5, 6), 2))
+        sys.stdout.write(' passed!\n')
 
 
 
