@@ -5,6 +5,9 @@ from functools import partialmethod
 def _register(name, func):
     setattr(Tensor, name, partialmethod(func.apply, func))
 
+def _unbroadcast(arr, shape):
+    return np.lib.stride_tricks.as_strided(arr, shape).copy()
+
 class Add(Function):
     def forward(self, x, y):
         self.save_for_backward(x.shape, y.shape)
@@ -12,7 +15,7 @@ class Add(Function):
 
     def backward(self, prev_grad, **kwargs):
         xshape, yshape, = self.saved_tensors
-        return np.broadcast_to(prev_grad, xshape), np.broadcast_to(prev_grad, yshape)
+        return _unbroadcast(prev_grad, xshape), _unbroadcast(prev_grad, yshape)
 _register('add', Add)
 
 class Sub(Function):
@@ -22,7 +25,7 @@ class Sub(Function):
 
     def backward(self, prev_grad, **kwargs):
         xshape, yshape, = self.saved_tensors
-        return prev_grad * np.ones(xshape), -prev_grad * np.ones(yshape)
+        return _unbroadcast(prev_grad, xshape), - _unbroadcast(prev_grad, yshape)
 _register('sub', Sub)
 
 class Matmul(Function):
@@ -42,7 +45,7 @@ class Multiply(Function):
 
     def backward(self, prev_grad, **kwargs):
         x, y, = self.saved_tensors
-        return prev_grad * y, prev_grad * x
+        return _unbroadcast(prev_grad * y, x.shape), _unbroadcast(prev_grad * x, y.shape)
 _register('multiply', Multiply)
 
 class Mean(Function):
@@ -122,12 +125,14 @@ _register('tanh', Tanh)
 
 class Pow(Function):
     def forward(self, x, y):
-        self.save_for_backward(x, y)
-        return np.power(x, y)
+        result = np.power(x, y)
+        self.save_for_backward(x, y, result)
+        return result
 
     def backward(self, prev_grad, **kwargs):
-        x, y, = self.saved_tensors
-        return (np.broadcast_to(prev_grad * y * np.power(x, y - 1), x.shape), None)
+        x, y, power, = self.saved_tensors
+        return _unbroadcast(prev_grad * y * np.power(x, y - 1), x.shape), \
+                _unbroadcast(prev_grad * power * np.log(x), y.shape)
 _register('pow', Pow)
 
 class Reshape(Function):
