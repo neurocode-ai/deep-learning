@@ -4,17 +4,20 @@ class Tensor(object):
     def __init__(self, data, requires_grad=False, dtype=np.float32, _idx=None, _isleaf=True):
         self.requires_grad = requires_grad
 
-        if isinstance(data, int) or isinstance(data, float):
+        if isinstance(data, (int, float)):
             data = np.array([data]).astype(dtype)
 
-        elif isinstance(data, list) or isinstance(data, tuple):
+        elif isinstance(data, (tuple, list)):
             data = np.array(data).astype(dtype)
+
+        elif isinstance(data, (np.float32, np.float64)):
+            data = np.array([data]).astype(dtype)
 
         elif isinstance(data, np.ndarray):
             data = data.astype(dtype)
 
         else: raise ValueError(
-                f'unknown data instance passed to Tensor, {type(data)}')
+        f'unknown data instance passed to Tensor, {type(data)}')
 
         self.data = data
         self.grad = None
@@ -23,7 +26,8 @@ class Tensor(object):
         self._isleaf = _isleaf
 
     def __str__(self):
-        return f'<leaf.Tensor(\n{self.data}\n'+f'dtype={self.dtype}, grad_fn={self._ctx}, grad={self.grad}>'
+        return f'<leaf.Tensor(\n{self.data}\n' \
+                'dtype={self.dtype}, grad_fn={self._ctx}, grad={self.grad}>'
 
     @classmethod
     def zeros(cls, *shape, **kwargs):
