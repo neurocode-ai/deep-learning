@@ -6,6 +6,7 @@ import timeit
 import unittest
 from leaf import Tensor
 from functools import partial
+np.random.seed(1)
 
 def _test_op(shapes, torch_func, leaf_func, name, timeits=10):
     torch_t = [torch.tensor(np.random.random(size=shape), requires_grad=True)
@@ -89,10 +90,10 @@ class TestOps(unittest.TestCase):
         _test_op([(5, 6)], lambda t: t.sigmoid(), Tensor.sigmoid, 'sigmoid')
 
     def test_pow(self):
-        _test_op([(1, 4)], lambda t: t.pow(2), lambda t: Tensor.pow(t, 2), 'pow')
-        _test_op([(10, 2, 8)], lambda t: t.pow(0.5), lambda t: Tensor.pow(t, 0.5), 'pow')
+        _test_op([(1, 4)], lambda t: t.pow(2), lambda t: Tensor.pow(t, Tensor(2)), 'pow')
+        _test_op([(10, 2, 8)], lambda t: t.pow(0.5), lambda t: Tensor.pow(t, Tensor(0.5)), 'pow')
         _test_op([(3, )], lambda t: t.pow(torch.tensor([1.0, 2.0, 0.5])),
-                lambda t: Tensor.pow(t, (1.0, 2.0, 0.5)), 'pow-axis')
+                lambda t: Tensor.pow(t, Tensor((1.0, 2.0, 0.5))), 'pow-axis')
     
     def test_reshape(self):
         _test_op([(8, 2)], lambda t: torch.reshape(t, (4, 4)), 

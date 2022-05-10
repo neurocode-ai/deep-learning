@@ -9,6 +9,7 @@ from leaf.datautil import fetch_mnist
 from leaf.datautil import DataLoader
 from leaf.optimizer import SGD, Adam
 from leaf.criterion import NLLLoss
+np.random.seed(1)
 
 def _reshape_collate_fn(t):
     if len(t.shape) > 2:
