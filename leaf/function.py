@@ -1,6 +1,30 @@
 import numpy as np
 from leaf import Tensor
 
+def _tensors_require_grad(*tensors):
+    return any(t.requires_grad for t in tensors if isinstance(t, Tensor))
+
+def _validate_arg_tensors(context, *tensors):
+    return [_extract_data(context, t) for t in tensors]
+
+def _extract_data(context, t):
+    if isinstance(t, np.ndarray):
+        return t
+
+    if isinstance(t, Tensor):
+        return t.data
+
+    if isinstance(t, int):
+        return np.array([t]).astype(int)
+
+    if isinstance(t, float):
+        return np.array([t]).astype(float)
+
+    if isinstance(t, (tuple, list)):
+        return np.array(t)
+
+    raise ValueError(f'unknown data instance passed as tensor arg to context {context}, {t}')
+
 class Function(object):
     def __init__(self, *tensors):
         self.parents = tensors
@@ -26,34 +50,9 @@ class Function(object):
             for res in results:
                 res._ctx = context if res.requires_grad else None
 
-        elif isinstance(results, np.ndarray) or isinstance(results, np.float32) or isinstance(results, np.float64):
+        elif isinstance(results, (np.ndarray, np.float32, np.float64, np.int8, np.int16, np.int32)):
             results = Tensor(results, requires_grad=context.requires_grad, _isleaf=False)
             results._ctx = context if results.requires_grad else None
 
         return results
-
-def _validate_arg_tensors(context, *tensors):
-    return [_extract_data(context, t) for t in tensors]
-
-def _extract_data(context, t):
-    if isinstance(t, np.ndarray):
-        return t
-
-    if isinstance(t, Tensor):
-        return t.data
-
-    if isinstance(t, int):
-        return np.array([t]).astype(int)
-
-    if isinstance(t, float):
-        return np.array([t]).astype(float)
-
-    if isinstance(t, tuple) or isinstance(t, list):
-        return np.array(t)
-
-    raise ValueError(f'unknown data instance passed as tensor arg to context' + 
-            f'{context}, {t}')
-
-def _tensors_require_grad(*tensors):
-    return any(t.requires_grad for t in tensors if isinstance(t, Tensor))
 
