@@ -78,11 +78,11 @@ class TestOps(unittest.TestCase):
                 lambda t: Tensor.sum(t, axis=(0, 1), keepdims=False), 'sum-args')
 
     def test_exp(self):
-        _test_op([(120, 156, 80)], lambda t: t.exp(), Tensor.exp, 'exp')
+        _test_op([(120, 56, 80)], lambda t: t.exp(), Tensor.exp, 'exp')
         _test_op([(8, )], lambda t: t.exp(), Tensor.exp, 'exp')
 
     def test_log(self):
-        _test_op([(154, 78, 2, 201)], lambda t: t.log(), Tensor.log, 'log')
+        _test_op([(154, 78, 2, 80)], lambda t: t.log(), Tensor.log, 'log')
         _test_op([(28, )], lambda t: t.log(), Tensor.log, 'log')
     
     def test_sigmoid(self):
@@ -128,4 +128,10 @@ class TestOps(unittest.TestCase):
         'logsoftmax')
         _test_op([(512, 1)], lambda x: nn.LogSoftmax(dim=1)(x), Tensor.logsoftmax,
         'logsoftmax')
+
+    def test_slice(self):
+        _test_op([(128, 4, 64)], lambda t: t[:, 0, :], lambda t: t[:, 0, :], 'slice')
+        _test_op([(64, 200)], lambda t: t[:2, :], lambda t: t[:2, :], 'slice')
+        _test_op([(100, 10, 20)], lambda t: t[:, :, :], lambda t: t[:, :, :], 'slice')
+        _test_op([(7, 5, 4, 8)], lambda t: t[0, 1, 2, 3], lambda t: t[0, 1, 2, 3], 'slice')
 
