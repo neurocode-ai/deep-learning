@@ -31,6 +31,9 @@ class Function(object):
         self.saved_tensors = []
         self.requires_grad = _tensors_require_grad(*tensors)
 
+    def __repr__(self):
+        return f'<leaf.ops.{self.__class__.__qualname__}>'
+
     def save_for_backward(self, *tensors):
         self.saved_tensors.extend(tensors)
 

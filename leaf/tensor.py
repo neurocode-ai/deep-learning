@@ -1,5 +1,8 @@
 import numpy as np
 
+# register all the ops now
+
+
 class Tensor(object):
     def __init__(self, data, requires_grad=False, dtype=np.float32, _idx=None, _isleaf=True):
         self.requires_grad = requires_grad
@@ -25,7 +28,7 @@ class Tensor(object):
         self._idx = _idx
         self._isleaf = _isleaf
 
-    def __str__(self):
+    def __repr__(self):
         return f'<leaf.Tensor(\n{self.data}\n' \
                 f'dtype={self.dtype}, grad_fn={self._ctx}, grad={self.grad}>'
 
@@ -64,7 +67,7 @@ class Tensor(object):
             # add any dims that are not being accessed
             shape += self.shape[len(args):]
             return self.slice(arg=args+[(0, self.shape[i]) for i in range(len(args),
-                len(self.shape))], newshape=shape)
+                len(self.shape))], nshape=shape)
 
         raise TypeError(
         f'list indices must be integers or slices, not {type(arg)}')
@@ -102,9 +105,6 @@ class Tensor(object):
     def dtype(self):
         return self.data.dtype
 
-    def chunk(self, chunks, dim=0):
-        chunked = np.split(self.data, chunks, dim)
-
     def backward(self, allow_fill=True):
         if allow_fill:
             self.grad = None
@@ -113,6 +113,13 @@ class Tensor(object):
             return
 
         if self.grad is None and allow_fill:
+            assert np.prod(self.shape) == 1, \
+            'You are trying to initiate a backwards call on a Tensor that ' \
+            'has not been reduced yet. The expected behavior is to reduce ' \
+            'your Tensor using either .sum() or .mean(), otherwise the implicit ' \
+            'creation of the gradient, i.e. initializing it with ones, might be ' \
+            'incorrect.'
+
             self.grad = np.ones(self.shape)
 
         parents = self._ctx.parents
