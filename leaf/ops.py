@@ -8,10 +8,6 @@ def _register(name, func):
 def _unbroadcast(arr, shape):
     return np.lib.stride_tricks.as_strided(arr, shape).copy()
 
-def _inner_slice(arr, arg):
-    pad = [(max(0, -p[0]) , max(0, p[1] - arr.shape[i])) for i, p in enumerate(arg)]
-    return arr
-
 class Add(Function):
     def forward(self, x, y):
         self.save_for_backward(x.shape, y.shape)
@@ -176,13 +172,19 @@ class LogSoftmax(Function):
         return prev_grad - np.exp(lse) * prev_grad.sum(axis=1).reshape((-1, 1))
 _register('logsoftmax', LogSoftmax)
 
+def _inner_slice(arr, arg):
+    return arr[tuple([slice(start, stop, None) for start, stop in arg])]
+
 class Slice(Function):
-    def forward(self, x, arg=None):
-        self.save_for_backward(x.shape)
-        return _inner_slice(x, arg)
+    def forward(self, x, arg=None, newshape=None):
+        self.save_for_backward(x.shape, arg, newshape)
+        return _inner_slice(x, arg).reshape(newshape)
 
     def backward(self, prev_grad, **kwargs):
-        shape, = self.saved_tensors
-        return prev_grad
+        shape, arg, newshape, = self.saved_tensors
+        result = np.zeros(shape)
+        coper = result[tuple([slice(start, stop, None) for start, stop in arg])].shape
+        result[tuple([slice(start, stop, None) for start, stop in arg])] = prev_grad.reshape(coper)
+        return result
 _register('slice', Slice)
 

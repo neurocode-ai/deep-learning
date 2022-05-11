@@ -27,30 +27,47 @@ class Tensor(object):
 
     def __str__(self):
         return f'<leaf.Tensor(\n{self.data}\n' \
-                'dtype={self.dtype}, grad_fn={self._ctx}, grad={self.grad}>'
+                f'dtype={self.dtype}, grad_fn={self._ctx}, grad={self.grad}>'
 
-    def __getitem__(self, arg):
-        indices = []
-        nshape = []
+    def __getitem__(self, indices):
+        """ Access items in Tensor.data via array indexing or slicing.
+        
+        if you invoke tensor[0], indices is type int
+        if you invoke tensor[:2], indices is type slice
+            a slice has attributes start, stop, step, in this case would be
+            start=0, stop=2, step=1
+        if you invoke tensor[1:4:2], start=1, stop=4, step=2, which would yield 
+            output of length 2, since you get tensor[1] and tensor[3], the stop
+            attribute is not included, so in range [slice.start, slice.stop)
 
-        if isinstance(arg, (int, float, tuple, slice)):
-            for i, s in enumerate(arg if isinstance(arg, (list, tuple)) else [arg]):
-                if isinstance(s, int):
-                    # arg is either an int, list, or tuple
-                    indices.append((s, s + 1))
+        if you invoke tensor[:, 0, :], indices is type tuple
+        because you now have three getitems that you want to do basically
+        the tuple is := (slice, int, slice)
+        with slices having start=0, stop=len(dim), step=1
+        
+        """
+        
+        args = []
+        shape = []
+
+        if indices is not None:
+            for idx, s in enumerate(indices if isinstance(indices, (list, tuple)) else [indices]):
+                if isinstance(s, (int, float)):
+                    args.append((s, s + 1))
                     continue
 
-                # arg is slice
-                indices.append((s.start if s.start is not None else 0,
-                    (s.stop if s.stop >= 0 else self.shape[i]+s.stop) if s.stop is not None else self.shape[i]))
-                nshape.append(indices[-1][1] - indices[-1][0])
-                assert s.step is None or s.step == 1
-            nshape += self.shape[len(indices):]
-            return self.slice(arg=indices+[(0, self.shape[i]) for i in range(len(indices), len(self.shape))]).reshape(shape=nshape)
+                start_idx = s.start if s.start is not None else 0
+                stop_idx = (s.stop if s.stop >= 0 else self.shape[idx] + s.stop) if s.stop is not None else self.shape[idx]
+                args.append((start_idx, stop_idx))  # the range in the dim that we want to access
+                shape.append(args[-1][1] - args[-1][0])  # basically stop - start
+
+            # add any dims that are not being accessed
+            shape += self.shape[len(args):]
+            return self.slice(arg=args+[(0, self.shape[i]) for i in range(len(args),
+                len(self.shape))], newshape=shape)
 
         raise TypeError(
         f'list indices must be integers or slices, not {type(arg)}')
-
 
     @classmethod
     def zeros(cls, *shape, **kwargs):
