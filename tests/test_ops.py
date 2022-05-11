@@ -1,9 +1,12 @@
 import torch
+import torch.nn as nn
+import torch.nn.functional as F
 import numpy as np
 import timeit
 import unittest
 from leaf import Tensor
 from functools import partial
+np.random.seed(1)
 
 def _test_op(shapes, torch_func, leaf_func, name, timeits=10):
     torch_t = [torch.tensor(np.random.random(size=shape), requires_grad=True)
@@ -13,25 +16,32 @@ def _test_op(shapes, torch_func, leaf_func, name, timeits=10):
     torch_out = torch_func(*torch_t)
     leaf_out = leaf_func(*leaf_t)
 
-    np.testing.assert_allclose(torch_out.detach().numpy(), leaf_out.data, 
-            atol=1e-6, rtol=1e-3)
+    _arrout_t = isinstance(torch_out, tuple) or isinstance(torch_out, list)
+    _arrout_l = isinstance(leaf_out, tuple) or isinstance(leaf_out, list)
 
-    torch_out.mean().backward()
-    leaf_out.mean().backward()        
+    if isinstance(torch_out, torch.Tensor):
+        torch_out = [torch_out]
+    if isinstance(leaf_out, Tensor):
+        leaf_out = [leaf_out]
+
+    for tt, lt in zip(torch_out, leaf_out):
+        np.testing.assert_allclose(tt.detach().numpy(), lt.data, atol=1e-6, rtol=1e-3)
+        tt.mean().backward()
+        lt.mean().backward()
 
     for tt, lt in zip(torch_t, leaf_t):
         np.testing.assert_allclose(tt.grad.detach().numpy(),
-                lt.grad.data, atol=1e-6, rtol=1e-3)
+                lt.grad, atol=1e-6, rtol=1e-3)
 
     f_torch_ms = timeit.Timer(partial(torch_func, 
         *torch_t)).timeit(timeits) * 1000.0 / timeits
     f_leaf_ms = timeit.Timer(partial(leaf_func,
         *leaf_t)).timeit(timeits) * 1000.0 / timeits
-
-    b_torch_ms = timeit.Timer(partial(lambda f,t: f(*t).mean().backward(),
-        torch_func, torch_t)).timeit(timeits) * 1000.0 / timeits
-    b_leaf_ms = timeit.Timer(partial(lambda f,t: f(*t).mean().backward(),
-        leaf_func, leaf_t)).timeit(timeits) * 1000.0 / timeits
+    
+    b_torch_ms = timeit.Timer(partial(lambda f,t,b: f(*t)[0].mean().backward() if b else
+        f(*t).mean().backward(), torch_func, torch_t, _arrout_t)).timeit(timeits) * 1000.0 / timeits
+    b_leaf_ms = timeit.Timer(partial(lambda f,t,b: f(*t)[0].mean().backward() if b else
+        f(*t).mean().backward(), leaf_func, leaf_t, _arrout_l)).timeit(timeits) * 1000.0 / timeits
 
     print(f'\n[*] testing {name} with shapes {shapes}, torch/leaf \n' \
             f'forward: {f_torch_ms:.3f} ms / {f_leaf_ms:.3f} ms ' \
@@ -68,22 +78,60 @@ class TestOps(unittest.TestCase):
                 lambda t: Tensor.sum(t, axis=(0, 1), keepdims=False), 'sum-args')
 
     def test_exp(self):
-        _test_op([(120, 156, 80)], lambda t: t.exp(), Tensor.exp, 'exp')
+        _test_op([(120, 56, 80)], lambda t: t.exp(), Tensor.exp, 'exp')
+        _test_op([(8, )], lambda t: t.exp(), Tensor.exp, 'exp')
 
     def test_log(self):
-        _test_op([(154, 78, 2, 201)], lambda t: t.log(), Tensor.log, 'log')
+        _test_op([(154, 78, 2, 80)], lambda t: t.log(), Tensor.log, 'log')
+        _test_op([(28, )], lambda t: t.log(), Tensor.log, 'log')
     
     def test_sigmoid(self):
         _test_op([(123, 51, 2)], lambda t: t.sigmoid(), Tensor.sigmoid, 'sigmoid')
         _test_op([(5, 6)], lambda t: t.sigmoid(), Tensor.sigmoid, 'sigmoid')
 
     def test_pow(self):
-        _test_op([(1, 4)], lambda t: t.pow(2), lambda t: Tensor.pow(t, 2), 'pow')
-        _test_op([(10, 2, 8)], lambda t: t.pow(0.5), lambda t: Tensor.pow(t, 0.5), 'pow')
+        _test_op([(1, 4)], lambda t: t.pow(2), lambda t: Tensor.pow(t, Tensor(2)), 'pow')
+        _test_op([(10, 2, 8)], lambda t: t.pow(0.5), lambda t: Tensor.pow(t, Tensor(0.5)), 'pow')
+        _test_op([(3, )], lambda t: t.pow(torch.tensor([1.0, 2.0, 0.5])),
+                lambda t: Tensor.pow(t, Tensor((1.0, 2.0, 0.5))), 'pow-axis')
     
     def test_reshape(self):
         _test_op([(8, 2)], lambda t: torch.reshape(t, (4, 4)), 
                 lambda t: Tensor.reshape(t, (4, 4)), 'reshape')
         _test_op([(17, 4, 8, 1)], lambda t: torch.reshape(t, (17, 2, 16)),
                 lambda t: Tensor.reshape(t, (17, 2, 16)), 'reshape')
+
+    def test_relu(self):
+        _test_op([(64, 1, 28, 28)], lambda t: F.relu(t), Tensor.relu, 'relu')
+        _test_op([(200, )], lambda t: F.relu(t), Tensor.relu, 'relu')
+
+    def test_tanh(self):
+        _test_op([(64, 1, 28, 28)], lambda t: torch.tanh(t), Tensor.tanh, 'tanh')
+        _test_op([(10, 64, 30)], lambda t: torch.tanh(t), Tensor.tanh, 'tanh')
+    
+    def test_chunk(self):
+        _test_op([(1, 12)], lambda t: t.chunk(4, dim=1), lambda t: Tensor.chunk(t,
+            chunks=4, dim=1), 'chunk')
+        _test_op([(8, 4, 10)], lambda t: t.chunk(2, dim=0), lambda t: Tensor.chunk(t,
+            chunks=2, dim=0), 'chunk')
+        _test_op([(100, 10, 20, 50)], lambda t: t.chunk(10, dim=3), lambda t:
+                Tensor.chunk(t, chunks=10, dim=3), 'chunk')
+    
+    def test_multiply(self):
+        _test_op([(4, 8), (4, 8)], lambda a, b: torch.mul(a, b), lambda a, b:
+                Tensor.multiply(a, b), 'multiply')
+        _test_op([(128, 10, 49), (128, 10, 49)], lambda a, b: torch.mul(a, b),
+                lambda a, b: Tensor.multiply(a, b), 'multiply')
+
+    def test_logsoftmax(self):
+        _test_op([(128, 100)], lambda x: nn.LogSoftmax(dim=1)(x), Tensor.logsoftmax,
+        'logsoftmax')
+        _test_op([(512, 1)], lambda x: nn.LogSoftmax(dim=1)(x), Tensor.logsoftmax,
+        'logsoftmax')
+
+    def test_slice(self):
+        _test_op([(128, 4, 64)], lambda t: t[:, 0, :], lambda t: t[:, 0, :], 'slice')
+        _test_op([(64, 200)], lambda t: t[:2, :], lambda t: t[:2, :], 'slice')
+        _test_op([(100, 10, 20)], lambda t: t[:, :, :], lambda t: t[:, :, :], 'slice')
+        _test_op([(7, 5, 4, 8)], lambda t: t[0, 1, 2, 3], lambda t: t[0, 1, 2, 3], 'slice')
 
