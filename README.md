@@ -1,4 +1,7 @@
 # Deep learning, with education in focus
+![Unit Tests Workflow Status Badge](https://github.com/neurocode-ai/deep-learning/actions/workflows/unittests.yml/badge.svg)
+
+
 With a passion rooted in knowledge, learning, and sharing of information, this repository aims to provide extensive information on majority of things deep learning related. This repository is for anyone interested in deep learning, with extensive guides and tutorial notebooks designed for both the curious novice learner and the experienced practitioner. As such, this is a Python focused repository that provides three high-level features:
 - Lecture notebooks on artificial neural networks and deep learning
 - Tutorials to evaluate your theoretical understanding on practical tasks
@@ -30,8 +33,11 @@ print(w.grad)  #dy/dw
 ### Neural networks
 The autograd library is basically all you need to build a barebones deep learning framework. Implement some criteria, optimizers, and boilerplate mini-batching code on top of that and you have everything you need to build neural networks! With leaf you can implement neural networks like you would in PyTorch, but compile them and train without all the boilerplate code.
 ```python
-import numpy as np
 import leaf.nn as nn
+from leaf.datautil import DataLoader
+from leaf.datautil import fetch_mnist
+from leaf.optimizer import Adam
+from leaf.criterion import NLLLoss
 
 # define your neural network, PyTorch style
 class DenseClassifier(nn.Module):
@@ -49,16 +55,17 @@ class DenseClassifier(nn.Module):
 ```
 Next just initialize the criteria for you domain-specific task, dataloader, optimizer of your choice, and you can seamlessly train a neural network from scratch. It supports training models with boilerplate code as well, like in PyTorch, but preferred and easier way is to use the trainer class.
 ```python
+# initialize neural network, loss function, and optimizer
 model = DenseClassifier()
-criterion = leaf.criterion.NLLLoss()
-optimizer = leaf.optim.Adam(
-  model.parameters(), lr=1e-3, weight_decay=1e-5
-)
+criterion = NLLLoss()
+optimizer = Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)
 
-train, _ = leaf.datautil.fetch_mnist()
-trainloader = leaf.datautil.DataLoader(train, batch_size=128, shuffle=True)
+# fetch and load datasets, wrap them in iterable dataloader
+train, test = fetch_mnist()
+trainloader = DataLoader(train, batch_size=128, shuffle=True)
+testloader = DataLoader(test, batch_size=128, shuffle=False)
 
-trainer = leaf.Trainer(trainloader, max_epochs=100)
+trainer = leaf.Trainer(trainloader, testloader=None, max_epochs=100)
 trainer.fit(model, criterion, optimizer)
 ```
 
