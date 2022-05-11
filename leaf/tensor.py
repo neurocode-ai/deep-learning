@@ -29,6 +29,29 @@ class Tensor(object):
         return f'<leaf.Tensor(\n{self.data}\n' \
                 'dtype={self.dtype}, grad_fn={self._ctx}, grad={self.grad}>'
 
+    def __getitem__(self, arg):
+        indices = []
+        nshape = []
+
+        if isinstance(arg, (int, float, tuple, slice)):
+            for i, s in enumerate(arg if isinstance(arg, (list, tuple)) else [arg]):
+                if isinstance(s, int):
+                    # arg is either an int, list, or tuple
+                    indices.append((s, s + 1))
+                    continue
+
+                # arg is slice
+                indices.append((s.start if s.start is not None else 0,
+                    (s.stop if s.stop >= 0 else self.shape[i]+s.stop) if s.stop is not None else self.shape[i]))
+                nshape.append(indices[-1][1] - indices[-1][0])
+                assert s.step is None or s.step == 1
+            nshape += self.shape[len(indices):]
+            return self.slice(arg=indices+[(0, self.shape[i]) for i in range(len(indices), len(self.shape))]).reshape(shape=nshape)
+
+        raise TypeError(
+        f'list indices must be integers or slices, not {type(arg)}')
+
+
     @classmethod
     def zeros(cls, *shape, **kwargs):
         return cls(np.zeros(shape), **kwargs)

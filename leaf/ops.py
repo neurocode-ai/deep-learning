@@ -9,6 +9,7 @@ def _unbroadcast(arr, shape):
     return np.lib.stride_tricks.as_strided(arr, shape).copy()
 
 def _inner_slice(arr, arg):
+    pad = [(max(0, -p[0]) , max(0, p[1] - arr.shape[i])) for i, p in enumerate(arg)]
     return arr
 
 class Add(Function):
@@ -183,4 +184,5 @@ class Slice(Function):
     def backward(self, prev_grad, **kwargs):
         shape, = self.saved_tensors
         return prev_grad
+_register('slice', Slice)
 
