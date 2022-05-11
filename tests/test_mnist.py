@@ -4,7 +4,7 @@ import os
 import unittest
 import timeit
 import leaf.nn as nn
-from tqdm import trange
+from tqdm import tqdm, trange
 from leaf import Tensor
 from leaf.datautil import fetch_mnist
 from leaf.datautil import DataLoader
@@ -45,20 +45,19 @@ class TestMNIST(unittest.TestCase):
                     collate_fn=_reshape_collate_fn
                 )
 
-            for _ in (t := trange(1, disable=os.getenv('CI') is not None)):
-                for samples, labels in trainloader:
-                    logits = model(samples)
-                    loss = criterion(logits, labels)
+            for samples, labels in (t := tqdm(trainloader)):
+                logits = model(samples)
+                loss = criterion(logits, labels)
 
-                    optimizer.zero_grad()
-                    loss.backward()
-                    optimizer.step()
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
 
-                    preds = np.argmax(logits.data, axis=-1)
-                    acc = (preds == labels.data.astype(int)).mean()
+                preds = np.argmax(logits.data, axis=-1)
+                acc = (preds == labels.data.astype(int)).mean()
 
-                    t.set_description(
-                    f'{optim} loss {loss.data[0][0]:.3f}  accuracy {acc:.3f}')
+                t.set_description(
+                f'{optim} loss {loss.data[0][0]:.3f}  accuracy {acc:.3f}')
 
             X_test, Y_test = testing._samples, testing._labels
             Y_test_preds_out = model(Tensor(X_test.reshape((-1, 784)))).data
