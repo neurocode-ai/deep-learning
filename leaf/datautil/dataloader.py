@@ -20,7 +20,7 @@ class DataLoader(object):
 
     def __iter__(self):
         for _ in range(len(self)):
-            indices = np.random.choice(len(self._dataset), self._batch_size)
+            indices = np.random.choice(len(self._dataset), self._batch_size, replace=False)
             samples, labels, = self._dataset[indices]
             yield self._collate_fn(samples), self._collate_fn(labels)
 
