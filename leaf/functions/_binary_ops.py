@@ -48,6 +48,7 @@ class Pow(Function):
 
     def backward(self, grad, **kwargs):
         x, y, result, = self.saved_tensors
+        logged = np.log(x, out=np.zeros_like(x), where=(x>0))
         return _unbroadcast(y * grad * x ** (y - 1), x.shape), \
-                _unbroadcast(np.log(x) * grad * result, y.shape)
+                _unbroadcast(result * grad * logged, y.shape)
 
