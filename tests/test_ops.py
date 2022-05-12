@@ -4,6 +4,7 @@ import torch.nn.functional as F
 import numpy as np
 import timeit
 import unittest
+import leaf
 from leaf import Tensor
 from functools import partial
 np.random.seed(1)
@@ -134,4 +135,12 @@ class TestOps(unittest.TestCase):
         _test_op([(64, 200)], lambda t: t[:2, :], lambda t: t[:2, :], 'slice')
         _test_op([(100, 10, 20)], lambda t: t[:, :, :], lambda t: t[:, :, :], 'slice')
         _test_op([(7, 5, 4, 8)], lambda t: t[0, 1, 2, 3], lambda t: t[0, 1, 2, 3], 'slice')
+
+    def test_cat(self):
+        _test_op([(5, 3, 4) for _ in range(3)], 
+                lambda x, y, z: torch.cat((x.unsqueeze(0), y.unsqueeze(0), z.unsqueeze(0)), dim=0),
+                lambda x, y, z: leaf.concatenate((x, y, z), dim=0), 'concatenate-dim=0')
+        _test_op([(128, 5, 10) for _ in range(3)], 
+                lambda x, y, z: torch.cat((x.unsqueeze(1), y.unsqueeze(1), z.unsqueeze(1)), dim=1),
+                lambda x, y, z: leaf.concatenate((x, y, z), dim=1), 'conatenate-dim=1')
 
