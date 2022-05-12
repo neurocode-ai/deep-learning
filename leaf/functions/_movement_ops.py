@@ -37,3 +37,25 @@ class Chunk(Function):
         struct = [np.zeros_like(grad) if i != _idx else grad for i in range(chunks)]
         return np.concatenate(struct, axis=dim).reshape(xshape)
 
+class Transpose(Function):
+    def forward(self, x, order):
+        self.save_for_backward(order)
+        return np.transpose(x, order)
+
+    def backward(self, grad, **kwargs):
+        order, = self.saved_tensors
+        return np.transpose(grad, tuple(np.argsort(order)))
+
+class Concatenate(Function):
+    def forward(self, _, *tensors, dim=0):
+        self.save_for_backward(dim, [t.shape for t in tensors])
+        return np.concatenate([np.expand_dims(t.data, dim) for t in tensors], axis=dim)
+
+    def backward(self, grad, **kwargs):
+        dim, shapes, = self.saved_tensors
+        outs = np.split(grad, len(shapes), dim)
+        for i, (out, shape) in enumerate(zip(outs, shapes)):
+            outs[i] = out.reshape(shape)
+        outs.insert(0, None)
+        return outs
+
