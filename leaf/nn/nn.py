@@ -13,11 +13,10 @@ class Module(object):
         params = []
         for attr in self.__dict__.values():
             if isinstance(attr, Tensor):
-                if attr.requires_grad:
-                    params.append(attr)
+                params.extend([attr] if attr.requires_grad else [])
             if isinstance(attr, list):
                 params.extend([p for p in attr if p.requires_grad])
-            if isinstance(attr, Sequential):
+            if isinstance(attr, (Module, Sequential)):
                 params.extend([p for p in attr.parameters() if p.requires_grad])
         return params
 
