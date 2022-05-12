@@ -1,7 +1,8 @@
 import numpy as np
 
-# register all the ops now
-
+def concatenate(tensors, dim=0):
+    tmp = Tensor.zeros(1)
+    return tmp.concatenate(*tensors, dim=dim)
 
 class Tensor(object):
     def __init__(self, data, requires_grad=False, dtype=np.float32, _idx=None, _isleaf=True):
@@ -124,6 +125,7 @@ class Tensor(object):
 
         parents = self._ctx.parents
         gradients = self._ctx.backward(self.grad, _idx=self._idx)
+        
         if isinstance(gradients, np.ndarray):
             gradients = [gradients]
 
