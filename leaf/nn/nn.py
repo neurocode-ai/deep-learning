@@ -86,7 +86,7 @@ class LSTM(Module):
             c_t = f_t.multiply(c_t).add(i_t.multiply(g_t))
             h_t = o_t.multiply(c_t.tanh())
             hidden_seq.append(h_t)
-        hidden_seq = leaf.concatenate(hidden_seq, dim=0)
+        hidden_seq = leaf.concatenate(hidden_seq, dim=1)
         return hidden_seq, (h_t, c_t)
 
 class Tanh(Module):
