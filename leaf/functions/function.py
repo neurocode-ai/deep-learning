@@ -27,7 +27,7 @@ def _extract_data(context, t):
 
 class Function(object):
     def __init__(self, *tensors):
-        self.parents = tensors
+        self.parents = [t for t in tensors if isinstance(t, Tensor)]
         self.saved_tensors = []
         self.requires_grad = _tensors_require_grad(*tensors)
 
