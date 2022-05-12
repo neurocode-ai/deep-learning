@@ -106,6 +106,16 @@ class Tensor(object):
     def dtype(self):
         return self.data.dtype
 
+    def _topological_sort(self):
+        def _recursive_walk(node, visited, nodes):
+            visited.add(node)
+            if node._ctx:
+                [_recursive_walk(n, visited, nodes) 
+                        for n in node._ctx.parents if n not in visited]
+                nodes.append(node)
+            return nodes
+        return _recursive_walk(self, set(), [])
+
     def backward(self, allow_fill=True):
         if allow_fill:
             self.grad = None
@@ -123,6 +133,37 @@ class Tensor(object):
 
             self.grad = np.ones(self.shape)
 
+        for t in reversed(self._topological_sort()):
+            if not any(tt.requires_grad for tt in t._ctx.parents):
+                continue
+
+            assert t.grad is not None, \
+            'The parents of the current node requires gradient, but no gradient has ' \
+            'been calculated or initialized for the current node. Make sure that the ' \
+            'current node inherited the correct grad requiremnts from parents.'
+            
+            parents = t._ctx.parents
+            gradients = t._ctx.backward(t.grad, _idx=t._idx)
+
+            if isinstance(gradients, np.ndarray):
+                gradients = [gradients]
+
+            for gradient, parent in zip(gradients, parents):
+                if gradient is None:
+                    continue
+
+                if parent.requires_grad:
+                    if parent.grad is None:
+                        gradient.flags.writeable = True
+                        parent.grad = gradient
+                    else:
+                        if not parent._isleaf:
+                            parent.grad = gradient
+                        else:
+                            parent.grad += gradient
+
+
+"""
         parents = self._ctx.parents
         gradients = self._ctx.backward(self.grad, _idx=self._idx)
         
@@ -143,4 +184,5 @@ class Tensor(object):
                     else:
                         parent.grad += gradient
                 parent.backward(allow_fill=False)
+"""
 
