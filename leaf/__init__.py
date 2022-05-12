@@ -1,4 +1,4 @@
-from .tensor import Tensor
+from .tensor import Tensor, concatenate
 from .trainer import Trainer
 from leaf import optimizer
 from leaf import criterion

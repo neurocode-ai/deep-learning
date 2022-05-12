@@ -1,3 +1,4 @@
+import leaf
 from leaf import Tensor
 
 class Module(object):
@@ -70,14 +71,13 @@ class LSTM(Module):
         if initial_states is None:
             h_t, c_t = (
                     Tensor.zeros(batch_size, HS, requires_grad=True),
-                    Tensor.zeros(HS, HS, requires_grad=True))
+                    Tensor.zeros(batch_size, HS, requires_grad=True))
         else: h_t, c_t = initial_states
 
         for t in range(seq_len):
-            # TODO: IMPLEMENT ARRAY ACCESSING FOR TENSOR, __getitem__
             x_t = x[:, t, :]
-            gates = x_t.matmul(self.W_ih.T).add(h_t.matmul(self.W_hh.T)).add(self.b_ih.add(self.b_hh))
-
+            gates = x_t.matmul(self.W_ih).add(h_t.matmul(self.W_hh)).add(self.b_ih.add(self.b_hh))
+            
             i_t, f_t, g_t, o_t = gates.chunk(chunks=4, dim=1)
             i_t = i_t.sigmoid()
             f_t = f_t.sigmoid()
@@ -86,7 +86,12 @@ class LSTM(Module):
             c_t = f_t.multiply(c_t).add(i_t.multiply(g_t))
             h_t = o_t.multiply(c_t.tanh())
             hidden_seq.append(h_t)
-        print(hidden_seq)
+        hidden_seq = leaf.concatenate(hidden_seq, dim=1)
+        return hidden_seq, (h_t, c_t)
+
+class Tanh(Module):
+    def forward(self, x):
+        return x.tanh()
 
 class LogSoftmax(Module):
     def forward(self, x):
@@ -95,3 +100,4 @@ class LogSoftmax(Module):
 class ReLU(Module):
     def forward(self, x):
         return x.relu()
+
