@@ -1,3 +1,4 @@
+import sys
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -10,6 +11,7 @@ from functools import partial
 np.random.seed(1)
 
 def _test_op(shapes, torch_func, leaf_func, name, timeits=10):
+    sys.stdout.write(f'\n[*] testing {name} with shapes {shapes}, torch/leaf \n')
     torch_t = [torch.tensor(np.random.random(size=shape), requires_grad=True)
             for shape in shapes]
     leaf_t = [Tensor(t.detach().numpy(), requires_grad=True) for t in torch_t]
@@ -44,9 +46,8 @@ def _test_op(shapes, torch_func, leaf_func, name, timeits=10):
     b_leaf_ms = timeit.Timer(partial(lambda f,t,b: f(*t)[0].mean().backward() if b else
         f(*t).mean().backward(), leaf_func, leaf_t, _arrout_l)).timeit(timeits) * 1000.0 / timeits
 
-    print(f'\n[*] testing {name} with shapes {shapes}, torch/leaf \n' \
-            f'forward: {f_torch_ms:.3f} ms / {f_leaf_ms:.3f} ms ' \
-            f'backward: {b_torch_ms:.3f} ms / {b_leaf_ms:.3f} ms')
+    sys.stdout.write(f'forward: {f_torch_ms:.3f} ms / {f_leaf_ms:.3f} ms ' \
+            f'backward: {b_torch_ms:.3f} ms / {b_leaf_ms:.3f} ms\n')
     
 class TestOps(unittest.TestCase):
     def test_add1(self):
@@ -176,4 +177,11 @@ class TestOps(unittest.TestCase):
     def test_conv2d1(self):
         _test_op([(1, 1, 28, 28), (4, 1, 3, 3)], lambda x, w: torch.nn.functional.conv2d(x, w, stride=1, groups=1),
                 Tensor.conv2d, 'conv2d')
+
+    def test_max1(self):
+        _test_op([(8, 2, 5, 5)], lambda t: torch.amax(t, axis=2, keepdims=True),
+                lambda t: Tensor.max(t, axis=2), 'max')
+    def test_max2(self):
+        _test_op([(7, 4, 5, 7)], lambda t: torch.amax(t, axis=(1, 3), keepdims=True),
+                lambda t: Tensor.max(t, axis=(1, 3), keepdims=True), 'max-tuple-axis')
 
