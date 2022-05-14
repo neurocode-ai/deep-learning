@@ -4,7 +4,7 @@ import os
 import gzip
 import numpy as np
 from pathlib import Path
-from .dataset import Dataset
+from .dataloading import Dataset
 
 __root__ = Path(os.getcwd())
 

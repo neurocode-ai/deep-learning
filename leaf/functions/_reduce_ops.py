@@ -20,3 +20,14 @@ class Sum(Function):
         xshape, = self.saved_tensors
         return np.ones(xshape) * grad
 
+class Max(Function):
+    def forward(self, x, axis=None, keepdims=True):
+        res = np.amax(x, axis=axis, keepdims=keepdims)
+        self.save_for_backward(x, axis, keepdims, res)
+        return res
+
+    def backward(self, grad, **kwargs):
+        x, axis, keepdims, res, = self.saved_tensors
+        mask = (x == res)
+        return mask * grad / mask.sum(axis=axis, keepdims=keepdims)
+
