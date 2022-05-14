@@ -173,3 +173,7 @@ class TestOps(unittest.TestCase):
                 lambda x, y, z: torch.cat((x.unsqueeze(1), y.unsqueeze(1), z.unsqueeze(1)), dim=1),
                 lambda x, y, z: leaf.concatenate((x, y, z), dim=1), 'conatenate-dim=1')
 
+    def test_conv2d1(self):
+        _test_op([(1, 1, 28, 28), (4, 1, 3, 3)], lambda x, w: torch.nn.functional.conv2d(x, w, stride=1, groups=1),
+                Tensor.conv2d, 'conv2d')
+
