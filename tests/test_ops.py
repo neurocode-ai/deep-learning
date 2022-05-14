@@ -63,7 +63,7 @@ class TestOps(unittest.TestCase):
     def test_matmul1(self):
         _test_op([(128, 784), (784, 64)], lambda x, y: x.matmul(y), Tensor.matmul, 'matmul')
     def test_matmul2(self):
-        _test_op([(2048, 2048), (2048, 2048)], lambda x, y: x.matmul(y), Tensor.matmul, 'matmul')
+        _test_op([(512, 2048), (2048, 2048)], lambda x, y: x.matmul(y), Tensor.matmul, 'matmul')
 
     def test_mean1(self):
         _test_op([(78, 152)], lambda t: t.mean(), Tensor.mean, 'mean')
