@@ -13,11 +13,13 @@ from leaf.criterion import NLLLoss
 np.random.seed(1)
 optimizers = {'sgd': SGD, 'adam': Adam}
 
-def _reshape_collate_fn(t):
-    if len(t.shape) > 2:
-        return Tensor(t.reshape((-1, 784)))
+def _reshape_collate_fn(tupl):
+    X, y = tupl
+    
+    if len(X.shape) > 2:
+        return Tensor(X.reshape((-1, 784))), Tensor(y)
 
-    return Tensor(t)
+    return Tensor(X), Tensor(y)
 
 class LinearNet(nn.Module):
     def __init__(self, bias):
@@ -45,7 +47,7 @@ class TestMNIST(unittest.TestCase):
                     collate_fn=_reshape_collate_fn
                 )
 
-            for samples, labels in (t := tqdm(trainloader)):
+            for (samples, labels) in (t := tqdm(trainloader)):
                 logits = model(samples)
                 loss = criterion(logits, labels)
 
@@ -59,7 +61,7 @@ class TestMNIST(unittest.TestCase):
                 t.set_description(
                 f'{optim} loss {loss.data[0][0]:.3f}  accuracy {acc:.3f}')
 
-            X_test, Y_test = testing._samples, testing._labels
+            X_test, Y_test = testing.samples, testing.labels
             Y_test_preds_out = model(Tensor(X_test.reshape((-1, 784)))).data
             Y_test_preds = np.argmax(Y_test_preds_out, axis=-1)
             acc = (Y_test_preds == Y_test).mean()
@@ -76,13 +78,13 @@ class TestMNIST(unittest.TestCase):
             criterion = NLLLoss()
             optimizer = optimizers[optim](model.parameters(), lr=1e-3)
             training, testing = fetch_mnist(remove_after=False)
-            X_train, Y_train = training._samples, training._labels
-            X_test, Y_test = testing._samples, testing._labels
+            X_train, Y_train = training.samples, training.labels
+            X_test, Y_test = testing.samples, testing.labels
             X_train = X_train.reshape((-1, 784))
             X_test = X_test.reshape((-1, 784))
             batch_size = 128
 
-            for _ in (t := trange(300, disable=os.getenv('CI') is not None)):
+            for _ in (t := trange(400, disable=os.getenv('CI') is not None)):
                 indices = np.random.randint(0, X_train.shape[0], size=(batch_size))
                 samples = Tensor(X_train[indices])
                 targets = Tensor(Y_train[indices])
@@ -100,7 +102,6 @@ class TestMNIST(unittest.TestCase):
                 t.set_description(
                 f'{optim} loss {loss.data[0][0]:.3f}  accuracy {acc:.3f}')
 
-            X_test, Y_test = testing._samples, testing._labels
             Y_test_preds_out = model(Tensor(X_test.reshape((-1, 784)))).data
             Y_test_preds = np.argmax(Y_test_preds_out, axis=-1)
             acc = (Y_test_preds == Y_test).mean()
