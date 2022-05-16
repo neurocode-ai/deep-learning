@@ -177,6 +177,19 @@ class TestOps(unittest.TestCase):
     def test_conv2d1(self):
         _test_op([(1, 1, 28, 28), (4, 1, 3, 3)], lambda x, w: torch.nn.functional.conv2d(x, w, stride=1, groups=1),
                 Tensor.conv2d, 'conv2d')
+    def test_conv2d2(self):
+        _test_op([(16, 4, 32, 32), (8, 4, 5, 5)], lambda x, w: torch.nn.functional.conv2d(x, w, stride=2, groups=1),
+                lambda x, w: Tensor.conv2d(x, w, stride=2), 'conv2d')
+
+    def test_maxpool2d1(self):
+        _test_op([(8, 2, 28, 28)], lambda t: torch.nn.functional.max_pool2d(t, (2, 2), stride=2), 
+                lambda t: Tensor.maxpool2d(t, kernel_size=2, stride=2), 'maxpool2d')
+    def test_maxpool2d2(self):
+        _test_op([(128, 8, 12, 12)], lambda t: torch.nn.functional.max_pool2d(t, (3, 3), stride=3), 
+                lambda t: Tensor.maxpool2d(t, kernel_size=3, stride=3), 'maxpool2d')
+    def test_maxpool2d3(self):
+        _test_op([(8, 16, 12, 12)], lambda t: torch.nn.functional.max_pool2d(t, (4, 4), stride=4), 
+                lambda t: Tensor.maxpool2d(t, kernel_size=4, stride=4), 'maxpool2d')
 
     def test_max1(self):
         _test_op([(8, 2, 5, 5)], lambda t: torch.amax(t, axis=2, keepdims=True),
