@@ -20,6 +20,102 @@ class Dot(Function):
         return grad.dot(y.T), x.T.dot(grad)
 
 class Conv2d(Function):
+    # padding doesn't work, TODO: fix this
+    def forward(self, x, w, stride=1, padding=0):
+        if isinstance(stride, int):
+            stride = (stride, stride)
+        if isinstance(padding, int):
+            padding = (padding, padding)
+
+        batch_size, in_C_, in_H, in_W = x.shape
+        out_C, in_C, kernel_H, kernel_W = w.shape
+        stride_H, stride_W = stride
+        pad_H, pad_W = padding
+
+        assert in_C == in_C_
+
+        out_H = ((in_H + 2 * pad_H - (kernel_H - 1) - 1) // stride_H) + 1
+        out_W = ((in_W + 2 * pad_W - (kernel_W - 1) - 1) // stride_W) + 1
+
+        self.save_for_backward(x, w, stride)
+        tw = w.reshape(out_C, -1).T
+        result = np.zeros((batch_size, out_C, out_H, out_W)).astype(x.dtype)
+        for h in range(out_H):
+            for w in range(out_W):
+                ih, iw = h * stride_H, w * stride_W
+                result[:, :, h, w] = np.dot(
+                        x[:, :, ih:ih+kernel_H, iw:iw+kernel_W].reshape(batch_size, -1), tw)
+
+        return result
+
+    def backward(self, grad, **kwargs):
+        x, w, stride, = self.saved_tensors
+        _, _, out_H, out_W = grad.shape
+        batch_size, in_C_, in_H, in_W = x.shape
+        out_C, in_C, kernel_H, kernel_W = w.shape
+        stride_H, stride_W = stride
+
+        dx = np.zeros((batch_size, in_C_, in_H, in_W)).astype(x.dtype)
+        dw = np.zeros((out_C, in_C, kernel_H, kernel_W)).astype(w.dtype)
+        tw = w.reshape(out_C, -1)
+        for h in range(out_H):
+            for w in range(out_W):
+                ih, iw = h * stride_H, w * stride_W
+                g = grad[:, :, h, w]
+                dw += g.T.dot(
+                        x[:, :, ih:ih+kernel_H, iw:iw+kernel_W].reshape(batch_size, -1)).reshape(dw.shape)
+                dx[:, :, ih:ih+kernel_H, iw:iw+kernel_W] += g.dot(
+                        tw).reshape(batch_size, in_C_, kernel_H, kernel_W)
+
+        return dx, dw
+
+class MaxPool2d(Function):
+    def forward(self, x, kernel_size=2, stride=2, padding=0):
+        if isinstance(kernel_size, int):
+            kernel_size = (kernel_size, kernel_size)
+        if isinstance(stride, int):
+            stride = (stride, stride)
+        if isinstance(padding, int):
+            padding = (padding, padding)
+
+        batch_size, in_C, in_H, in_W = x.shape
+        kernel_H, kernel_W = kernel_size
+        stride_H, stride_W = stride
+        pad_H, pad_W = padding
+
+        out_H = ((in_H + 2 * pad_H - (kernel_H - 1) - 1) // stride_H) + 1
+        out_W = ((in_W + 2 * pad_W - (kernel_W - 1) - 1) // stride_W) + 1
+
+        self.save_for_backward(x, kernel_size, stride)
+        result = np.zeros((batch_size, in_C, out_H, out_W)).astype(x.dtype)
+        for h in range(out_H):
+            for w in range(out_W):
+                ih, iw = h * stride_H, w * stride_W
+                result[:, :, h, w] = np.max(
+                        x[:, :, ih:ih+kernel_H, iw:iw+kernel_W].reshape(batch_size, in_C, -1), axis=-1)
+
+        return result
+    
+    def backward(self, grad, **kwargs):
+        x, kernel_size, stride, = self.saved_tensors
+        _, _, out_H, out_W = grad.shape
+        batch_size, in_C, in_H, in_W = x.shape
+        kernel_H, kernel_W = kernel_size
+        stride_H, stride_W = stride
+
+        dx = np.zeros((batch_size, in_C, in_H, in_W)).astype(x.dtype)
+        for h in range(out_H):
+            for w in range(out_W):
+                ih, iw = h * stride_H, w * stride_W
+                receptive_field = x[:, :, ih:ih+kernel_H, iw:iw+kernel_W].reshape(batch_size, in_C, -1)
+                maxmask = (receptive_field.max(axis=-1, keepdims=True) == receptive_field)
+                g = np.expand_dims(grad[:, :, h, w], axis=-1)
+                dx[:, :, ih:ih+kernel_H, iw:iw+kernel_W] = np.multiply(g, maxmask).reshape(batch_size, in_C, kernel_H, kernel_W)
+
+        return dx
+
+""" this is fast forward conv, almost pytorch speed...
+class Conv2d(Function):
     def forward(self, x, w, stride=1, groups=1):
         if isinstance(stride, int):
             stride = (stride, stride)
@@ -82,6 +178,7 @@ class Conv2d(Function):
         for g in range(groups):
             gkernel += np.tensordot(ggrad[:, g], tGEMM_x[:, g], ((0, 2, 3), (0, 2, 3)))
 
+        # THIS IS SLOW!!!!!!!
         ginput = np.zeros((bsize, groups, in_C, in_H, in_W)).astype(tGEMM_x.dtype)
         for k in range(out_H * out_W):
             h, w = k // out_W, k % out_H
@@ -95,3 +192,4 @@ class Conv2d(Function):
         gkernel = gkernel.reshape((groups * r_out_C, in_C, kernel_H, kernel_W))
         return ginput, gkernel
 
+"""
