@@ -198,3 +198,10 @@ class TestOps(unittest.TestCase):
         _test_op([(7, 4, 5, 7)], lambda t: torch.amax(t, axis=(1, 3), keepdims=True),
                 lambda t: Tensor.max(t, axis=(1, 3), keepdims=True), 'max-tuple-axis')
 
+    def test_pad2d1(self):
+        _test_op([(128, 8, 25, 25)], lambda t: torch.nn.functional.pad(t, (2, 2, 2, 2)),
+                lambda t: Tensor.pad2d(t, padding=2), 'pad2d')
+    def test_pad2d2(self):
+        _test_op([(128, 8, 25, 25)], lambda t: torch.nn.functional.pad(t, (4, 4, 4, 4)),
+                lambda t: Tensor.pad2d(t, padding=(4, 4)), 'pad2d')
+
