@@ -39,7 +39,7 @@ class DataLoader(object):
         for i in range(len(self)):
             if self.shuffle:
                 indices = self.rng.choice(len(self.dataset), self.batch_size, replace=False)
-                yield self.collate_fn(self.dataset[indices])
+                yield self.collate_fn(*self.dataset[indices])
                 continue
             
             lowidx, upidx = i * self.batch_size, (i + 1) * self.batch_size
