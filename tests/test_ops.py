@@ -54,11 +54,15 @@ class TestOps(unittest.TestCase):
         _test_op([(100, 100), (100, 100)], lambda x, y: x + y, Tensor.add, 'add')
     def test_add2(self):
         _test_op([(100, 100, 40, 2), (100, 100, 40, 2)], lambda x, y: x + y, Tensor.add, 'add')
+    def test_add3(self):
+        _test_op([(512, 10), (512, 10)], lambda x, y: x + y, lambda x, y: x + y, 'add')
 
     def test_sub1(self):
         _test_op([(100, 100), (100, 100)], lambda x, y: x - y, Tensor.sub, 'sub')
     def test_sub2(self):
         _test_op([(100, 10, 30, 40), (100, 10, 30, 40)], lambda x, y: x - y, Tensor.sub, 'sub')
+    def test_sub3(self):
+        _test_op([(512, 10), (512, 10)], lambda x, y: x - y, lambda x, y: x - y, 'sub')
 
     def test_matmul1(self):
         _test_op([(128, 784), (784, 64)], lambda x, y: x.matmul(y), Tensor.matmul, 'matmul')
@@ -91,6 +95,11 @@ class TestOps(unittest.TestCase):
     def test_sum5(self):
         _test_op([(2, 4, 1)], lambda t: t.sum(axis=(0, 1), keepdims=False),
                 lambda t: Tensor.sum(t, axis=(0, 1), keepdims=False), 'sum-args')
+
+    def test_div1(self):
+        _test_op([(4, 1), (4, 1)], lambda x, y: x / y, Tensor.div, 'div')
+    def test_div2(self):
+        _test_op([(100, 20, 5), (100, 20, 5)], lambda x, y: x / y, lambda x, y: Tensor.div(x, y), 'div')
 
     def test_exp1(self):
         _test_op([(120, 56, 80)], lambda t: t.exp(), Tensor.exp, 'exp')
@@ -148,6 +157,11 @@ class TestOps(unittest.TestCase):
     def test_multiply2(self):
         _test_op([(128, 10, 49), (128, 10, 49)], lambda a, b: torch.mul(a, b),
                 lambda a, b: Tensor.multiply(a, b), 'multiply')
+
+    def test_mul1(self):
+        _test_op([(10, 4), (10, 4)], lambda x, y: x * y, lambda x, y: x * y, 'mul')
+    def test_mul2d(self):
+        _test_op([(512, 784), (512, 784)], lambda x, y: x * y, lambda x, y: Tensor.mul(x, y), 'mul')
 
     def test_logsoftmax1(self):
         _test_op([(128, 100)], lambda x: nn.LogSoftmax(dim=1)(x), Tensor.logsoftmax,
