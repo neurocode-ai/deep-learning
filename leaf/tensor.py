@@ -29,28 +29,23 @@ class Tensor(object):
         self._idx = _idx
         self._isleaf = _isleaf
 
+    def __add__(self, t):
+        return self.add(t)
+
+    def __sub__(self, t):
+        return self.sub(t)
+    
+    def __mul__(self, t):
+        return self.mul(t)
+
+    def __div__(self, t):
+        return self.div(t)
+
     def __repr__(self):
         return f'<leaf.Tensor(\n{self.data}\n' \
                 f'dtype={self.dtype}, grad_fn={self._ctx}, grad={self.grad}>'
 
     def __getitem__(self, indices):
-        """ Access items in Tensor.data via array indexing or slicing.
-        
-        if you invoke tensor[0], indices is type int
-        if you invoke tensor[:2], indices is type slice
-            a slice has attributes start, stop, step, in this case would be
-            start=0, stop=2, step=1
-        if you invoke tensor[1:4:2], start=1, stop=4, step=2, which would yield 
-            output of length 2, since you get tensor[1] and tensor[3], the stop
-            attribute is not included, so in range [slice.start, slice.stop)
-
-        if you invoke tensor[:, 0, :], indices is type tuple
-        because you now have three getitems that you want to do basically
-        the tuple is := (slice, int, slice)
-        with slices having start=0, stop=len(dim), step=1
-        
-        """
-        
         args = []
         shape = []
 
@@ -105,6 +100,9 @@ class Tensor(object):
     @property
     def dtype(self):
         return self.data.dtype
+    
+    def detach(self):
+        return Tensor(self.data, dtype=self.dtype, requires_grad=False)
 
     def _topological_sort(self):
         def _recursive_walk(node, visited, nodes):
@@ -161,28 +159,4 @@ class Tensor(object):
                             parent.grad = gradient
                         else:
                             parent.grad += gradient
-
-
-"""
-        parents = self._ctx.parents
-        gradients = self._ctx.backward(self.grad, _idx=self._idx)
-        
-        if isinstance(gradients, np.ndarray):
-            gradients = [gradients]
-
-        for gradient, parent in zip(gradients, parents):
-            if gradient is None:
-                continue
-
-            if parent.requires_grad:
-                if parent.grad is None: 
-                    gradient.flags.writeable = True
-                    parent.grad = gradient
-                else:
-                    if not parent._isleaf:
-                        parent.grad = gradient
-                    else:
-                        parent.grad += gradient
-                parent.backward(allow_fill=False)
-"""
 
