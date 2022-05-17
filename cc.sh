@@ -19,5 +19,5 @@ function main() {
   traverse "$1"
 }
 
-main "$1"
+main "."
 
