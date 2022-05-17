@@ -40,6 +40,15 @@ class Multiply(Function):
         x, y, = self.saved_tensors
         return _unbroadcast(y * grad, x.shape), _unbroadcast(x * grad, y.shape)
 
+class Div(Function):
+    def forward(self, x, y):
+        self.save_for_backward(x, y)
+        return x / y
+
+    def backward(self, grad, **kwargs):
+        x, y, = self.saved_tensors
+        return _unbroadcast(grad / y, x.shape), _unbroadcast(-grad * x / (y ** 2), y.shape)
+
 class Pow(Function):
     def forward(self, x, y):
         result = x ** y
