@@ -20,7 +20,6 @@ class Dot(Function):
         return grad.dot(y.T), x.T.dot(grad)
 
 class Conv2d(Function):
-    # padding doesn't work, TODO: fix this
     def forward(self, x, w, stride=1, padding=0):
         if isinstance(stride, int):
             stride = (stride, stride)
@@ -113,6 +112,18 @@ class MaxPool2d(Function):
                 dx[:, :, ih:ih+kernel_H, iw:iw+kernel_W] = np.multiply(g, maxmask).reshape(batch_size, in_C, kernel_H, kernel_W)
 
         return dx
+
+class Pad2d(Function):
+    def forward(self, x, padding=1):
+        if isinstance(padding, int):
+            padding = (padding, padding)
+
+        self.save_for_backward(x.shape, padding)
+        return np.pad(x, ((0, 0), (0, 0), padding, padding), 'constant')
+
+    def backward(self, grad, **kwargs):
+        x, pad, = self.saved_tensors
+        return grad[:, :, pad[0]:x[2]+pad[1], pad[0]:x[3]+pad[1]] * np.ones(x)
 
 """ this is fast forward conv, almost pytorch speed...
 class Conv2d(Function):
