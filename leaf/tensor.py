@@ -187,6 +187,32 @@ class Tensor(object):
         return _recursive_walk(self, set(), [])
 
     def backward(self, allow_fill=True):
+        """ invoke implicit creation of gradient from self, Tensor, that is 
+        assumed to have been reduced. Whenever this function is invoked
+        on a tensor that is a _leaf tensor, i.e. user created Tensor,
+        not created as a result of a Function, then nothing is performed.
+        
+        The backwards pass begins by performing a topological search through
+        the dynamically created directed acyclic graph where each unique
+        node is extracted. These nodes are then, in reversed order, i.e. 
+        starting from the end of the graph and moving in the opposite direction,
+        used to retrieve the analytical gradient and providing it to the
+        nodes parents, if they have requires_gradient=True, otherwise, the backwards
+        pass stops. 
+
+        If the current node has _leaf=True, then the gradient is added to the
+        previously calculated gradient, meaning, the backwards pass can be invoked
+        multiple times yielding a cummulative sum of the analytical gradients.
+
+        Parameters
+        ----------
+        allow_fill: bool
+            Whether or not to allow implicit creation of gradient. This is required
+            for the last node in the directed acyclic graph, and as follows by 
+            the analytical gradient, this is initialized as ones. Subsequentially,
+            this is set to false for all potential recursive backwards calls.
+
+        """
         if allow_fill:
             self.grad = None
 
