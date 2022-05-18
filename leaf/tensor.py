@@ -1,6 +1,32 @@
+""" ---------------------------------------------------------------------------
+Definition and implementation of the Tensor class, the fundamental
+building block of the autograd framework. Initializing the class
+is either done by prividing an ndarray (NumPy) or specifying what
+pre-initialized data array that should be used.
+
+If any Tensor is used created, it is referred to as a leaf node. This means
+that it should be a root node in the directed acyclic graph which is created
+when invoking a backward pass. Leaf nodes are by default set to NOT require
+gradient calculation. All parameters of a nn.Module has requires_gradient=True,
+but can be set to False by user.
+
+All Tensors that are not a leaf node should have been created from a
+Function, as such, they are part of a context. A context is the result
+of an invoked Function call, e.g. `add` or `matmul`, and stores the parent
+nodes of the created Tensor. Furthermore, the context is used to propagate
+the gradient during the backwards pass, and each Function (context) has to
+have a backwards pass implementation for this to be possible. For more 
+information on Functions and contexts, see `leaf/functions/*` directory.
+
+
+Authors: Wilhelm Ågren <wilhelmagren98@gmail.com>
+Last edited: 18-05-2022
+License: Aapache 2.0
+--------------------------------------------------------------------------- """
 import numpy as np
 
 def concatenate(tensors, dim=0):
+    """ temporary implementation of the concatnate Function... """
     tmp = Tensor.zeros(1)
     return tmp.concatenate(*tensors, dim=dim)
 
