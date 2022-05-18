@@ -1,3 +1,12 @@
+""" ---------------------------------------------------------------------------
+Initialize the leaf, minimalistic deep learning framework, module and all its 
+submodules and dependencies. Register all available ops from `leaf/functions/`
+as attributes for the Tensor class.
+
+Authors: Wilhelm Ågren <wilhelmagren98@gmail.com>
+Last edited: 18-05-2022
+License: Aapache 2.0
+--------------------------------------------------------------------------- """
 from .tensor import Tensor, concatenate
 from .trainer import Trainer
 from leaf import optimizer
@@ -6,20 +15,16 @@ from leaf import nn
 from leaf import initializer
 from leaf import datautil
 
-
-# Register all Function ops to the Tensor here!!!
+# register ops for Tensor below...
 import sys
 import os
 import inspect
 import importlib
 from functools import partialmethod
 
-def _register_op(name, func):
-    setattr(Tensor, name, partialmethod(func.apply, func))
-
 def _register_from_import(namespace):
-    for name, cls in inspect.getmembers(namespace, inspect.isclass):
-        _register_op(name.lower(), cls)
+    for name, func in inspect.getmembers(namespace, inspect.isclass):
+        setattr(Tensor, name.lower(), partialmethod(func.apply, func))
 
 opfiles = os.listdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'functions'))
 opfiles = [f.split('.')[0] for f in opfiles if f.endswith('_ops.py')]
