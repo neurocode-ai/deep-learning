@@ -31,6 +31,31 @@ def concatenate(tensors, dim=0):
     return tmp.concatenate(*tensors, dim=dim)
 
 class Tensor(object):
+    """ implementation and definition of the Tensor class, initializer
+    requires positional argument data but remaining 4 keyword arguments
+    are optional. However, initializer does not allow for any keyword
+    arguments apart from the specified ones, obviously. Some of the 
+    keyword arguments are subject to change, should be, when we find
+    out how to do some of the Function gradients smarter.
+
+    Parameters
+    ----------
+    data: ndarray | list | tuple | float | int
+        yes
+    requires_grad: bool
+        Specify whether Tensor requires gradient computation as part of the 
+        dynamically created directed acyclic graph during backwards pass.
+    dtype: np.dtype | float | int
+        Specify the datatype to try and cast the input data as. Defaults as
+        np.float32, but is subject to change.
+    _idx: int | None
+        Temporary implementation solution to make the `chunk` Function work.
+        TODO: we want to remove this in the future..
+    _isleaf: bool
+        Boolean that defines the Tensor as either a leaf node, when user created
+        _leaf=True, or generated through invoking Function _leaf=False
+
+    """
     def __init__(self, data, requires_grad=False, dtype=np.float32, _idx=None, _isleaf=True):
         self.requires_grad = requires_grad
 
@@ -131,6 +156,27 @@ class Tensor(object):
         return Tensor(self.data, dtype=self.dtype, requires_grad=False)
 
     def _topological_sort(self):
+        """ recursively go through the implicitly defined directed acyclic
+        graph and add each unique node, Tensor, to the list of nodes to
+        perform backwards pass for.
+
+        Parameters
+        ----------
+        node: Tensor
+            The node to recursively add parents from, if they are not
+            previously visited. See next argument.
+        visited: set
+            A unique set of nodes, Tensors, that have already used
+            to invoke recursive call. Prevent cyclic parents.
+        nodes: list
+            The parent nodes, Tensors, found so far during the recursion.
+
+        Returns
+        -------
+        nodes: The list of unique nodes to calculate gradients for
+            in the already invoked backwards pass.
+
+        """
         def _recursive_walk(node, visited, nodes):
             visited.add(node)
             if node._ctx:
