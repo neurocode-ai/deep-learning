@@ -4,8 +4,8 @@ submodules and dependencies. Register all available ops from `leaf/functions/`
 as attributes for the Tensor class.
 
 Authors: Wilhelm Ågren <wilhelmagren98@gmail.com>
-Last edited: 18-05-2022
-License: Aapache 2.0
+Last edited: 19-05-2022
+License: Apache 2.0
 --------------------------------------------------------------------------- """
 from .tensor import Tensor, concatenate
 from .trainer import Trainer
