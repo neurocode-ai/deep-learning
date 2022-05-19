@@ -1,7 +1,26 @@
+""" ---------------------------------------------------------------------------
+Neural network module parent class Module which is inherited for all buildin 
+blocks. The Sequential class is used to streamline defining a neural network,
+taking a number of Module objects which are used with a single forward call.
+
+See class specific documentation for more information.
+
+Authors: Wilhelm Ågren <wilhelmagren98@gmail.com>
+Last edited: 19-05-2022
+License: Apache 2.0
+--------------------------------------------------------------------------- """
 import leaf
 from leaf import Tensor
 
 class Module(object):
+    """ parent class for neural network building blocks, i.e Modules, that
+    defines invoking structure. The neural network Module specific
+    forward pass is called by invoking __call__ on the building block
+    that inherits this class. Because this is just a parent class defining
+    behavior for subsequent neural network building blocks, no __init__
+    method is defined and can not be inherited by subclasses.
+
+    """
     def __call__(self, x):
         return self.forward(x)
 
@@ -17,11 +36,26 @@ class Module(object):
             if isinstance(attr, list):
                 params.extend([p for p in attr if p.requires_grad])
             if isinstance(attr, (Module, Sequential)):
+                # recursively find all Tensor parameters if nested Module,
+                # i.e. neural network building blocks in Sequential or
+                # parent Module.
                 params.extend([p for p in attr.parameters() if p.requires_grad])
         return params
 
 class Sequential(object):
+    """ wrapper implementation for multiple Module objects to
+    simplify forward pass definition in user defined neural network.
+
+    Parameters
+    ----------
+    *modules: tuple | Module
+        Colection of positional arguments to use with propagation
+        of forwards pass call. If it is a tuple, all members
+        should be Module objects, otherwise they won't be callable.
+
+    """
     def __init__(self, *modules):
+        assert all(isinstance(m, Module) for m in modules)
         self.modules = modules
 
     def __call__(self, x):
@@ -37,56 +71,5 @@ class Sequential(object):
         for m in self.modules:
             params.extend(m.parameters())
         return params
-    
-class LSTM(Module):
-    def __init__(self, input_size, hidden_size, n_layers=1):
-        self.input_size = input_size
-        self.hidden_size = hidden_size
-        self.n_layers = n_layers
-        self.W_ih = Tensor.uniform(input_size, hidden_size*4, requires_grad=True)
-        self.W_hh = Tensor.uniform(hidden_size, hidden_size*4, requires_grad=True)
-        self.b_ih = Tensor.uniform(hidden_size*4, requires_grad=True)
-        self.b_hh = Tensor.uniform(hidden_size*4, requires_grad=True)
 
-    def forward(self, x, initial_states=None):
-        batch_size, seq_len, item_len = x.shape
-        hidden_seq = []
-        HS = self.hidden_size
-
-        if initial_states is None:
-            h_t, c_t = (
-                    Tensor.zeros(batch_size, HS, requires_grad=True),
-                    Tensor.zeros(batch_size, HS, requires_grad=True))
-        else: h_t, c_t = initial_states
-
-        for t in range(seq_len):
-            x_t = x[:, t, :]
-            gates = x_t.matmul(self.W_ih).add(h_t.matmul(self.W_hh)).add(self.b_ih.add(self.b_hh))
-            
-            i_t, f_t, g_t, o_t = gates.chunk(chunks=4, dim=1)
-            i_t = i_t.sigmoid()
-            f_t = f_t.sigmoid()
-            g_t = g_t.tanh()
-            o_t = o_t.sigmoid()
-            c_t = f_t.multiply(c_t).add(i_t.multiply(g_t))
-            h_t = o_t.multiply(c_t.tanh())
-            hidden_seq.append(h_t)
-        hidden_seq = leaf.concatenate(hidden_seq, dim=1)
-        return hidden_seq, (h_t, c_t)
-
-class Tanh(Module):
-    def forward(self, x):
-        return x.tanh()
-
-class LogSoftmax(Module):
-    def forward(self, x):
-        return x.logsoftmax()
-
-class ReLU(Module):
-    def forward(self, x):
-        return x.relu()
-
-class Sigmoid(Module):
-    def forward(self, x):
-        return x.sigmoid()
 
