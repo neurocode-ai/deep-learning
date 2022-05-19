@@ -20,8 +20,8 @@ information on Functions and contexts, see `leaf/functions/*` directory.
 
 
 Authors: Wilhelm Ågren <wilhelmagren98@gmail.com>
-Last edited: 18-05-2022
-License: Aapache 2.0
+Last edited: 19-05-2022
+License: Apache 2.0
 --------------------------------------------------------------------------- """
 import numpy as np
 
